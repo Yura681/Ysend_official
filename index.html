@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https: wss:; frame-src 'none'; object-src 'none'; base-uri 'self';">
-<meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta http-equiv="X-Frame-Options" content="DENY">
-<meta http-equiv="X-XSS-Protection" content="1; mode=block">
-<meta name="referrer" content="no-referrer">
-<title>Ysend - Защищённый мессенджер</title>
+<title>Ysend - Настоящие аудиозвонки</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
@@ -30,18 +24,6 @@
     --text-secondary: #a0a0b8;
     --text-tertiary: #6a6a8a;
     --border: #2a2a3a;
-    --shadow: 0 8px 32px rgba(108,99,255,0.15);
-}
-
-body.light {
-    --bg-dark: #f5f5f5;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f0f0f0;
-    --bg-tertiary: #e8e8e8;
-    --text-primary: #1a1a1a;
-    --text-secondary: #666666;
-    --text-tertiary: #999999;
-    --border: #e0e0e0;
 }
 
 body {
@@ -50,7 +32,6 @@ body {
     font-family: 'Inter', sans-serif;
     height: 100vh;
     overflow: hidden;
-    transition: all 0.3s ease;
 }
 
 @keyframes fadeInUp {
@@ -81,7 +62,7 @@ body {
 .auth-screen {
     position: fixed;
     inset: 0;
-    background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-primary) 100%);
+    background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -164,7 +145,13 @@ body {
 }
 
 .auth-btn:hover { transform: translateY(-2px); }
-.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.auth-error {
+    color: var(--red);
+    font-size: 0.8rem;
+    text-align: center;
+    margin-top: 16px;
+}
 
 /* Main App */
 .main-app { display: none; height: 100vh; }
@@ -546,7 +533,6 @@ body {
     gap: 20px;
     z-index: 1500;
     animation: fadeInUp 0.3s ease;
-    box-shadow: var(--shadow);
 }
 
 .incoming-call-buttons { display: flex; gap: 12px; }
@@ -650,20 +636,6 @@ body {
     animation: fadeInUp 0.3s ease;
 }
 
-/* Security badge */
-.security-badge {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(108,99,255,0.2);
-    border-radius: 20px;
-    padding: 6px 12px;
-    font-size: 0.7rem;
-    color: var(--accent-light);
-    z-index: 100;
-    backdrop-filter: blur(4px);
-}
-
 @media (max-width: 768px) {
     .sidebar {
         position: absolute;
@@ -678,7 +650,6 @@ body {
     .sidebar.open { transform: translateX(0); }
     .back-btn { display: flex; }
     .message { max-width: 85%; }
-    .security-badge { display: none; }
 }
 </style>
 </head>
@@ -687,9 +658,9 @@ body {
 <!-- Auth Screen -->
 <div class="auth-screen" id="authScreen">
     <div class="auth-card">
-        <div class="auth-logo-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="auth-logo-icon">Y</div>
         <div style="text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">Ysend</div>
-        <div style="text-align: center; color: var(--text-secondary); margin-bottom: 32px;">🔒 Защищённый мессенджер с шифрованием</div>
+        <div style="text-align: center; color: var(--text-secondary); margin-bottom: 32px;">Настоящие аудиозвонки 📞</div>
         <div class="auth-tabs">
             <button class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
             <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
@@ -702,7 +673,7 @@ body {
         <div id="registerForm" style="display: none;">
             <input type="text" id="regNickname" class="auth-input" placeholder="Никнейм">
             <input type="email" id="regEmail" class="auth-input" placeholder="Email">
-            <input type="password" id="regPassword" class="auth-input" placeholder="Пароль (мин. 8 символов)">
+            <input type="password" id="regPassword" class="auth-input" placeholder="Пароль (мин. 6 символов)">
             <button class="auth-btn" onclick="register()">Создать аккаунт →</button>
         </div>
         <div class="auth-error" id="authError"></div>
@@ -737,9 +708,8 @@ body {
 
     <div class="chat-area" id="chatArea">
         <div id="noChat" style="flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); flex-direction:column; gap:16px;">
-            <i class="fas fa-lock" style="font-size: 64px; opacity:0.3;"></i>
-            <div>🔒 Все сообщения шифруются AES-256</div>
-            <div>Выберите чат или начните новый</div>
+            <i class="fas fa-phone" style="font-size: 64px; opacity:0.3;"></i>
+            <div>Выберите чат и позвоните другу</div>
             <button class="icon-btn" onclick="openNewChatModal()" style="width: auto; padding: 12px 24px;"><i class="fas fa-plus"></i> Новый чат</button>
         </div>
         <div id="chatScreen" style="display:none; flex:1; flex-direction:column;">
@@ -750,7 +720,7 @@ body {
                     <div style="font-weight:700" id="chatTitle">...</div>
                     <div style="font-size:0.75rem; color:var(--text-tertiary)" id="chatStatus">...</div>
                 </div>
-                <button class="icon-btn" onclick="startCall()"><i class="fas fa-phone"></i></button>
+                <button class="icon-btn" id="callButton" onclick="startCall()"><i class="fas fa-phone"></i></button>
                 <button class="icon-btn" onclick="openChatInfo()"><i class="fas fa-info-circle"></i></button>
             </div>
             <div class="messages" id="messages"></div>
@@ -762,7 +732,7 @@ body {
                     <button onclick="cancelRecording()" style="background:none; border:none; color:var(--red); cursor:pointer;">Отмена</button>
                 </div>
                 <div class="input-container">
-                    <textarea class="message-input" id="messageInput" rows="1" placeholder="🔒 Сообщение шифруется..." onkeydown="handleKeyPress(event)" oninput="autoResize(this)"></textarea>
+                    <textarea class="message-input" id="messageInput" rows="1" placeholder="Сообщение..." onkeydown="handleKeyPress(event)" oninput="autoResize(this)"></textarea>
                     <button class="input-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Голосовое"><i class="fas fa-microphone"></i></button>
                     <label class="input-btn" style="cursor:pointer;">
                         <i class="fas fa-paperclip"></i>
@@ -775,15 +745,11 @@ body {
     </div>
 </div>
 
-<div class="security-badge">
-    <i class="fas fa-shield-alt"></i> AES-256 шифрование
-</div>
-
 <!-- Settings Modal -->
 <div class="modal" id="settingsModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>Настройки безопасности</h2>
+            <h2>Настройки</h2>
             <button class="modal-close" onclick="closeModal('settingsModal')"><i class="fas fa-times"></i></button>
         </div>
         <div style="margin-bottom: 20px;">
@@ -791,16 +757,6 @@ body {
                 <span><i class="fas fa-moon"></i> Тёмная тема</span>
                 <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
             </label>
-        </div>
-        <div style="margin-bottom: 20px; padding: 12px; background: var(--bg-tertiary); border-radius: 12px;">
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                <i class="fas fa-shield-alt"></i> <strong>Безопасность</strong><br>
-                • AES-256 шифрование сообщений<br>
-                • Защита от XSS атак<br>
-                • HTTPS только<br>
-                • CSP заголовки<br>
-                • CSRF защита
-            </div>
         </div>
         <button class="auth-btn" onclick="closeModal('settingsModal')">Закрыть</button>
     </div>
@@ -890,7 +846,7 @@ body {
     <div class="call-timer" id="callTimer"></div>
     <div class="call-controls">
         <button class="call-btn mute" id="muteBtn" onclick="toggleMute()"><i class="fas fa-microphone"></i></button>
-        <button class="call-btn end" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
+        <button class="call-btn end" onclick="hangUp()"><i class="fas fa-phone-slash"></i></button>
     </div>
 </div>
 
@@ -900,120 +856,49 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-// ============ КРИПТОГРАФИЯ (AES-256) ============
-// Простая реализация шифрования для клиентской стороны
-// В реальном проекте используйте Web Crypto API
+// Firebase Config
+const firebaseConfig = {
+    apiKey: "AIzaSyB-yTlSlnozIhdpp-0vfAoZK92PHUMf_jU",
+    authDomain: "ysend-e71e6.firebaseapp.com",
+    projectId: "ysend-e71e6",
+    storageBucket: "ysend-e71e6.firebasestorage.app",
+    messagingSenderId: "78110029191",
+    appId: "1:78110029191:web:6c4bdf3a40ee0664c6cf22"
+};
 
-class Encryption {
-    constructor() {
-        this.key = null;
-    }
-    
-    async generateKey() {
-        const keyMaterial = await crypto.subtle.generateKey(
-            { name: "AES-GCM", length: 256 },
-            true,
-            ["encrypt", "decrypt"]
-        );
-        this.key = keyMaterial;
-        return keyMaterial;
-    }
-    
-    async deriveKeyFromPassword(password, salt) {
-        const enc = new TextEncoder();
-        const keyMaterial = await crypto.subtle.importKey(
-            "raw",
-            enc.encode(password),
-            "PBKDF2",
-            false,
-            ["deriveKey"]
-        );
-        return await crypto.subtle.deriveKey(
-            { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
-            keyMaterial,
-            { name: "AES-GCM", length: 256 },
-            true,
-            ["encrypt", "decrypt"]
-        );
-    }
-    
-    async encrypt(text, key) {
-        if (!key) return { encrypted: text, iv: null };
-        const enc = new TextEncoder();
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encrypted = await crypto.subtle.encrypt(
-            { name: "AES-GCM", iv: iv },
-            key,
-            enc.encode(text)
-        );
-        return {
-            encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
-            iv: btoa(String.fromCharCode(...iv))
-        };
-    }
-    
-    async decrypt(encryptedData, iv, key) {
-        if (!key || !encryptedData || !iv) return encryptedData;
-        try {
-            const encryptedBytes = Uint8Array.from(atob(encryptedData), c => c.charCodeAt(0));
-            const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
-            const decrypted = await crypto.subtle.decrypt(
-                { name: "AES-GCM", iv: ivBytes },
-                key,
-                encryptedBytes
-            );
-            return new TextDecoder().decode(decrypted);
-        } catch (e) {
-            console.error("Ошибка расшифровки:", e);
-            return encryptedData;
-        }
-    }
-}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-const encryption = new Encryption();
-let userEncryptionKey = null;
-
-// ============ ЗАЩИТА ОТ XSS ============
-function sanitizeInput(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function sanitizeOutput(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-// ============ RATE LIMITING ============
-const rateLimits = new Map();
-function checkRateLimit(action, userId, limit = 10, windowMs = 60000) {
-    const key = `${action}:${userId}`;
-    const now = Date.now();
-    const record = rateLimits.get(key) || { count: 0, resetTime: now + windowMs };
-    
-    if (now > record.resetTime) {
-        record.count = 1;
-        record.resetTime = now + windowMs;
-    } else {
-        record.count++;
+// ============ TURN/STUN СЕРВЕРЫ ДЛЯ РАБОТЫ МЕЖДУ ЛЮБЫМИ СЕТЯМИ ============
+const iceServers = [
+    { urls: "stun:stun.cloudflare.com:3478" },
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun.stunprotocol.org:3478" },
+    { 
+        urls: "turn:turn.cloudflare.com:3478?transport=udp",
+        username: "test",
+        credential: "test"
+    },
+    { 
+        urls: "turn:turn.cloudflare.com:443?transport=tcp",
+        username: "test",
+        credential: "test"
+    },
+    {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject"
+    },
+    {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject"
     }
-    
-    rateLimits.set(key, record);
-    
-    if (record.count > limit) {
-        return false;
-    }
-    return true;
-}
+];
 
-// ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+// Глобальные переменные
 let currentUser = null;
 let currentUserData = null;
 let currentChat = null;
@@ -1048,33 +933,11 @@ let newChatTab = 'direct';
 let banTargetUid = null;
 let banTargetName = '';
 
-// TURN/STUN серверы
-const iceServers = [
-    { urls: "stun:stun.cloudflare.com:3478" },
-    { urls: "stun:stun.l.google.com:19302" },
-    { 
-        urls: "turn:turn.cloudflare.com:3478?transport=udp",
-        username: "test",
-        credential: "test"
-    },
-    { 
-        urls: "turn:turn.cloudflare.com:443?transport=tcp",
-        username: "test",
-        credential: "test"
-    },
-    {
-        urls: "turn:openrelay.metered.ca:80",
-        username: "openrelayproject",
-        credential: "openrelayproject"
-    }
-];
-
-// ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
+// Вспомогательные функции
 function showToast(msg, type = 'info') {
-    const sanitizedMsg = sanitizeOutput(msg);
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${sanitizedMsg}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${msg}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
@@ -1100,18 +963,14 @@ function formatDuration(seconds) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// ============ ШИФРОВАНИЕ СООБЩЕНИЙ ============
-async function encryptMessage(text) {
-    if (!userEncryptionKey) return { encrypted: text, iv: null };
-    return await encryption.encrypt(text, userEncryptionKey);
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
-async function decryptMessage(encrypted, iv) {
-    if (!userEncryptionKey || !encrypted || encrypted === 'Нет сообщений') return encrypted;
-    return await encryption.decrypt(encrypted, iv, userEncryptionKey);
-}
-
-// ============ ТЕМА ============
+// Тема
 window.toggleTheme = function() {
     document.body.classList.toggle('light');
     localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
@@ -1122,7 +981,7 @@ if (localStorage.getItem('theme') === 'light') {
     document.getElementById('themeToggle').checked = true;
 }
 
-// ============ АВТОРИЗАЦИЯ ============
+// Авторизация
 window.switchAuthTab = function(tab) {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
@@ -1141,11 +1000,6 @@ window.switchAuthTab = function(tab) {
 };
 
 window.register = async function() {
-    if (!checkRateLimit('register', 'global', 5, 60000)) {
-        document.getElementById('authError').textContent = 'Слишком много попыток. Подождите минуту.';
-        return;
-    }
-    
     const nickname = document.getElementById('regNickname').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
@@ -1155,36 +1009,23 @@ window.register = async function() {
         errorDiv.textContent = 'Заполните все поля';
         return;
     }
-    if (password.length < 8) {
-        errorDiv.textContent = 'Пароль должен быть не менее 8 символов';
+    if (password.length < 6) {
+        errorDiv.textContent = 'Пароль должен быть не менее 6 символов';
         return;
     }
-    if (nickname.length < 3 || nickname.length > 20) {
-        errorDiv.textContent = 'Никнейм должен быть от 3 до 20 символов';
-        return;
-    }
-    
-    const sanitizedNickname = sanitizeInput(nickname);
     
     try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(cred.user, { displayName: sanitizedNickname });
+        await updateProfile(cred.user, { displayName: nickname });
         await setDoc(doc(db, 'users', cred.user.uid), {
-            uid: cred.user.uid, nickname: sanitizedNickname, email: email.toLowerCase(),
-            avatar: null, role: 'member', online: true, createdAt: serverTimestamp(),
-            bannedUntil: null, bannedReason: null, loginAttempts: 0
+            uid: cred.user.uid, nickname, email, avatar: null, role: 'member',
+            online: true, createdAt: serverTimestamp(), bannedUntil: null
         });
-        
-        // Генерация ключа шифрования для пользователя
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        userEncryptionKey = await encryption.deriveKeyFromPassword(password, salt);
-        
         showToast('Аккаунт создан!', 'success');
     } catch (error) {
-        console.error('Register error:', error);
         const errors = {
             'auth/email-already-in-use': 'Email уже используется',
-            'auth/weak-password': 'Пароль слишком простой',
+            'auth/weak-password': 'Слабый пароль',
             'auth/invalid-email': 'Неверный email'
         };
         errorDiv.textContent = errors[error.code] || error.message;
@@ -1192,45 +1033,29 @@ window.register = async function() {
 };
 
 window.login = async function() {
-    if (!checkRateLimit('login', 'global', 5, 60000)) {
-        document.getElementById('authError').textContent = 'Слишком много попыток. Подождите минуту.';
-        return;
-    }
-    
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('authError');
-    
     if (!email || !password) {
         errorDiv.textContent = 'Заполните все поля';
         return;
     }
-    
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        // Генерация ключа шифрования
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        userEncryptionKey = await encryption.deriveKeyFromPassword(password, salt);
-        
-        // Сброс счетчика попыток
-        await updateDoc(doc(db, 'users', userCredential.user.uid), { loginAttempts: 0 });
-        
+        await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-        console.error('Login error:', error);
         errorDiv.textContent = 'Неверный email или пароль';
     }
 };
 
 window.logout = async function() {
     if (currentUser) {
-        if (isCallActive) endCall();
+        if (isCallActive) hangUp();
         await updateDoc(doc(db, 'users', currentUser.uid), { online: false });
-        userEncryptionKey = null;
     }
     await signOut(auth);
 };
 
+// Создание аккаунта Yura (владелец)
 async function createYuraAccount() {
     const q = query(collection(db, 'users'), where('nickname', '==', 'Yura'));
     const snap = await getDocs(q);
@@ -1240,8 +1065,7 @@ async function createYuraAccount() {
             await updateProfile(cred.user, { displayName: 'Yura' });
             await setDoc(doc(db, 'users', cred.user.uid), {
                 uid: cred.user.uid, nickname: 'Yura', email: 'yura@ysend.com',
-                avatar: null, role: 'owner', online: false, createdAt: serverTimestamp(),
-                bannedUntil: null, loginAttempts: 0
+                avatar: null, role: 'owner', online: false, createdAt: serverTimestamp(), bannedUntil: null
             });
             console.log('Аккаунт Yura создан');
         } catch(e) { console.log('Yura уже существует'); }
@@ -1253,7 +1077,7 @@ async function createYuraAccount() {
     }
 }
 
-// ============ ЗАГРУЗКА ДАННЫХ ============
+// Загрузка данных
 async function loadAllUsers() {
     const snap = await getDocs(collection(db, 'users'));
     allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1265,8 +1089,9 @@ async function loadUserProfile() {
         avatar.innerHTML = `<img src="${currentUserData.avatar}">`;
     } else {
         avatar.textContent = getInitials(currentUserData.nickname);
+        avatar.style.background = 'linear-gradient(135deg, #6c63ff, #a78bfa)';
     }
-    document.getElementById('myName').textContent = sanitizeOutput(currentUserData.nickname);
+    document.getElementById('myName').textContent = currentUserData.nickname;
     const roleNames = { owner: '👑 Владелец', admin: '⚡ Администратор', member: 'Участник' };
     document.getElementById('myStatus').textContent = roleNames[currentUserData.role] || 'Участник';
 }
@@ -1318,8 +1143,8 @@ function renderChatsList() {
                     ${!isGroup && allUsers.find(u => u.uid === chat.members?.find(m => m !== currentUser.uid))?.online ? '<div class="online-dot"></div>' : ''}
                 </div>
                 <div class="user-details">
-                    <div class="user-name">${sanitizeOutput(name)}</div>
-                    <div class="user-status">${sanitizeOutput(chat.lastMessage || 'Нет сообщений')}</div>
+                    <div class="user-name">${escapeHtml(name)}</div>
+                    <div class="user-status">${escapeHtml(chat.lastMessage || 'Нет сообщений')}</div>
                 </div>
                 <div style="text-align: right;">
                     <div style="font-size:0.7rem; color:var(--text-tertiary)">${formatTime(chat.lastMessageTime)}</div>
@@ -1346,7 +1171,7 @@ function renderPeopleList() {
                 ${user.online ? '<div class="online-dot"></div>' : ''}
             </div>
             <div class="user-details">
-                <div class="user-name">${sanitizeOutput(user.nickname)}</div>
+                <div class="user-name">${escapeHtml(user.nickname)}</div>
                 <div class="user-status">${user.online ? 'В сети' : 'Не в сети'}</div>
             </div>
         </div>
@@ -1378,7 +1203,7 @@ window.switchTab = function(tab, btn) {
     }
 };
 
-// ============ ЧАТЫ ============
+// Чаты
 window.selectChat = async function(chatId) {
     const chat = allChats.find(c => c.id === chatId);
     if (!chat) return;
@@ -1397,7 +1222,7 @@ window.selectChat = async function(chatId) {
         avatarContent = other?.avatar ? `<img src="${other.avatar}">` : getInitials(name);
     }
     document.getElementById('chatAvatar').innerHTML = avatarContent;
-    document.getElementById('chatTitle').textContent = sanitizeOutput(name);
+    document.getElementById('chatTitle').textContent = name;
     document.getElementById('chatStatus').textContent = isGroup ? `${chat.members.length} участников` : 'В сети';
     document.getElementById('noChat').style.display = 'none';
     document.getElementById('chatScreen').style.display = 'flex';
@@ -1416,24 +1241,22 @@ function closeChat() {
 
 window.closeChat = closeChat;
 
-async function loadMessages() {
+function loadMessages() {
     if (messagesUnsubscribe) messagesUnsubscribe();
     const q = query(collection(db, 'chats', currentChatId, 'messages'), orderBy('createdAt', 'asc'));
-    messagesUnsubscribe = onSnapshot(q, async (snap) => {
+    messagesUnsubscribe = onSnapshot(q, (snap) => {
         const container = document.getElementById('messages');
         container.innerHTML = '';
         if (snap.empty) {
-            container.innerHTML = '<div style="text-align:center; color:var(--text-tertiary); padding:40px;">Нет сообщений<br><span style="font-size:0.7rem;">🔒 Все сообщения шифруются</span></div>';
+            container.innerHTML = '<div style="text-align:center; color:var(--text-tertiary); padding:40px;">Нет сообщений</div>';
             return;
         }
-        for (const doc of snap.docs) {
-            await renderMessage(doc.data());
-        }
+        snap.forEach(doc => renderMessage(doc.data()));
         container.scrollTop = container.scrollHeight;
     });
 }
 
-async function renderMessage(msg) {
+function renderMessage(msg) {
     const isMine = msg.senderId === currentUser.uid;
     const sender = allUsers.find(u => u.uid === msg.senderId);
     const senderName = sender?.nickname || msg.senderName || '?';
@@ -1463,17 +1286,12 @@ async function renderMessage(msg) {
             </div>
         `;
     } else {
-        // Расшифровка текстового сообщения
-        let decryptedText = msg.text;
-        if (msg.encrypted && msg.iv) {
-            decryptedText = await decryptMessage(msg.text, msg.iv);
-        }
-        content = `<div class="message-text">${sanitizeOutput(decryptedText)}</div>`;
+        content = `<div class="message-text">${escapeHtml(msg.text)}</div>`;
     }
     
     messageDiv.innerHTML = `
         <div class="message-bubble">
-            ${currentChat?.type === 'group' && !isMine ? `<div class="sender-name">${sanitizeOutput(senderName)}</div>` : ''}
+            ${currentChat?.type === 'group' && !isMine ? `<div class="sender-name">${escapeHtml(senderName)}</div>` : ''}
             ${content}
             <div class="message-time">${formatTime(msg.createdAt)}</div>
         </div>
@@ -1481,101 +1299,7 @@ async function renderMessage(msg) {
     document.getElementById('messages').appendChild(messageDiv);
 }
 
-// ============ ОТПРАВКА СООБЩЕНИЙ С ШИФРОВАНИЕМ ============
-window.sendMessage = async function() {
-    if (!currentChatId) return;
-    
-    if (!checkRateLimit('message', currentUser.uid, 30, 60000)) {
-        showToast('Слишком много сообщений. Подождите немного.', 'error');
-        return;
-    }
-    
-    const input = document.getElementById('messageInput');
-    const text = input.value.trim();
-    
-    if (pendingFile) {
-        await uploadMedia();
-        return;
-    }
-    
-    if (!text) return;
-    input.value = '';
-    input.style.height = 'auto';
-    
-    // Шифрование сообщения
-    const { encrypted, iv } = await encryptMessage(text);
-    
-    const messageData = {
-        senderId: currentUser.uid,
-        senderName: currentUserData.nickname,
-        text: encrypted,
-        type: 'text',
-        createdAt: serverTimestamp()
-    };
-    
-    if (iv) {
-        messageData.iv = iv;
-        messageData.encrypted = true;
-    }
-    
-    await addDoc(collection(db, 'chats', currentChatId, 'messages'), messageData);
-    await updateDoc(doc(db, 'chats', currentChatId), { 
-        lastMessage: '🔒 Зашифрованное сообщение', 
-        lastMessageTime: serverTimestamp() 
-    });
-};
-
-async function uploadMedia() {
-    if (!pendingFile) return;
-    showToast('Загрузка...', 'info');
-    const fileRef = ref(storage, `images/${currentChatId}/${Date.now()}_${pendingFile.name}`);
-    await uploadBytes(fileRef, pendingFile);
-    const url = await getDownloadURL(fileRef);
-    await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
-        senderId: currentUser.uid, senderName: currentUserData.nickname,
-        type: 'image', url, createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, 'chats', currentChatId), { lastMessage: '📷 Фото', lastMessageTime: serverTimestamp() });
-    pendingFile = null;
-    showToast('Отправлено!', 'success');
-}
-
-window.handleFileSelect = function(event) {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('Файл слишком большой (макс. 5MB)', 'error');
-            return;
-        }
-        pendingFile = file;
-        showToast(`Файл выбран: ${file.name}`, 'info');
-    } else {
-        showToast('Выберите изображение (макс. 5MB)', 'error');
-    }
-    event.target.value = '';
-};
-
-window.handleKeyPress = function(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-    }
-};
-
-window.autoResize = function(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
-};
-
-window.openLightbox = function(url) {
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:3000; cursor:pointer;';
-    div.innerHTML = `<img src="${url}" style="max-width:90vw; max-height:90vh; border-radius:16px;">`;
-    div.onclick = () => div.remove();
-    document.body.appendChild(div);
-};
-
-// ============ ГОЛОСОВЫЕ СООБЩЕНИЯ ============
+// Голосовые сообщения
 window.toggleVoiceRecording = async function() {
     if (!currentChatId) { showToast('Выберите чат', 'error'); return; }
     if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -1595,7 +1319,6 @@ window.toggleVoiceRecording = async function() {
             stream.getTracks().forEach(t => t.stop());
             const blob = new Blob(audioChunks, { type: 'audio/webm' });
             if (blob.size < 1000) { showToast('Слишком короткое сообщение', 'error'); return; }
-            if (blob.size > 5 * 1024 * 1024) { showToast('Голосовое слишком длинное (макс. 5MB)', 'error'); return; }
             showToast('Отправка...', 'info');
             const voiceRef = ref(storage, `voice/${currentChatId}/${Date.now()}.webm`);
             await uploadBytes(voiceRef, blob);
@@ -1613,9 +1336,6 @@ window.toggleVoiceRecording = async function() {
         recordingInterval = setInterval(() => {
             recordingSeconds++;
             document.getElementById('recordingTimer').textContent = formatDuration(recordingSeconds);
-            if (recordingSeconds >= 60) {
-                mediaRecorder.stop();
-            }
         }, 1000);
     } catch(e) { showToast('Нет доступа к микрофону', 'error'); }
 };
@@ -1654,7 +1374,67 @@ window.playVoice = function(url, element) {
     };
 };
 
-// ============ СОЗДАНИЕ ЧАТОВ ============
+// Отправка сообщений
+window.sendMessage = async function() {
+    if (!currentChatId) return;
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+    if (pendingFile) {
+        await uploadMedia();
+        return;
+    }
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+    await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
+        senderId: currentUser.uid, senderName: currentUserData.nickname,
+        text, type: 'text', createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, 'chats', currentChatId), { lastMessage: text, lastMessageTime: serverTimestamp() });
+};
+
+async function uploadMedia() {
+    if (!pendingFile) return;
+    showToast('Загрузка...', 'info');
+    const fileRef = ref(storage, `images/${currentChatId}/${Date.now()}_${pendingFile.name}`);
+    await uploadBytes(fileRef, pendingFile);
+    const url = await getDownloadURL(fileRef);
+    await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
+        senderId: currentUser.uid, senderName: currentUserData.nickname,
+        type: 'image', url, createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, 'chats', currentChatId), { lastMessage: '📷 Фото', lastMessageTime: serverTimestamp() });
+    pendingFile = null;
+    showToast('Отправлено!', 'success');
+}
+
+window.handleFileSelect = function(event) {
+    pendingFile = event.target.files[0];
+    if (pendingFile) showToast(`Файл выбран: ${pendingFile.name}`, 'info');
+    event.target.value = '';
+};
+
+window.handleKeyPress = function(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+};
+
+window.autoResize = function(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+};
+
+window.openLightbox = function(url) {
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:3000; cursor:pointer;';
+    div.innerHTML = `<img src="${url}" style="max-width:90vw; max-height:90vh; border-radius:16px;">`;
+    div.onclick = () => div.remove();
+    document.body.appendChild(div);
+};
+
+// Создание чатов
 window.startDirectChat = async function(otherUid) {
     const existing = allChats.find(c => c.type === 'direct' && c.members.includes(otherUid) && c.members.includes(currentUser.uid));
     if (existing) {
@@ -1664,7 +1444,7 @@ window.startDirectChat = async function(otherUid) {
     }
     const chatRef = await addDoc(collection(db, 'chats'), {
         type: 'direct', members: [currentUser.uid, otherUid],
-        createdAt: serverTimestamp(), lastMessage: '🔒 Чат создан', lastMessageTime: serverTimestamp(), unread: {}
+        createdAt: serverTimestamp(), lastMessage: 'Чат создан', lastMessageTime: serverTimestamp(), unread: {}
     });
     await selectChat(chatRef.id);
     closeModal('newChatModal');
@@ -1699,7 +1479,7 @@ window.searchUsers = function() {
         <div class="person-item" onclick="startDirectChat('${user.uid}')">
             <div class="avatar" style="width:40px; height:40px;">${user.avatar ? `<img src="${user.avatar}">` : getInitials(user.nickname)}</div>
             <div class="user-details">
-                <div class="user-name">${sanitizeOutput(user.nickname)}</div>
+                <div class="user-name">${escapeHtml(user.nickname)}</div>
                 <div class="user-status">${user.online ? 'В сети' : 'Не в сети'}</div>
             </div>
         </div>
@@ -1712,10 +1492,10 @@ window.searchGroupUsers = function() {
     if (!search) { results.innerHTML = ''; return; }
     const filtered = allUsers.filter(u => u.uid !== currentUser.uid && u.nickname.toLowerCase().includes(search) && !selectedGroupMembers.find(m => m.uid === u.uid));
     results.innerHTML = filtered.map(user => `
-        <div class="person-item" onclick="addGroupMember('${user.uid}', '${sanitizeOutput(user.nickname)}', '${user.avatar || ''}')">
+        <div class="person-item" onclick="addGroupMember('${user.uid}', '${escapeHtml(user.nickname)}', '${user.avatar || ''}')">
             <div class="avatar" style="width:40px; height:40px;">${user.avatar ? `<img src="${user.avatar}">` : getInitials(user.nickname)}</div>
             <div class="user-details">
-                <div class="user-name">${sanitizeOutput(user.nickname)}</div>
+                <div class="user-name">${escapeHtml(user.nickname)}</div>
             </div>
             <div style="margin-left:auto; color:var(--accent);">＋</div>
         </div>
@@ -1740,7 +1520,7 @@ function renderSelectedMembers() {
             <div style="display:flex; flex-wrap:wrap; gap:8px;">
                 ${selectedGroupMembers.map(m => `
                     <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; background:rgba(108,99,255,0.15); border-radius:20px;">
-                        <span>${sanitizeOutput(m.nickname)}</span>
+                        <span>${escapeHtml(m.nickname)}</span>
                         <button onclick="removeGroupMember('${m.uid}')" style="background:none; border:none; color:var(--text-tertiary); cursor:pointer;">✕</button>
                     </div>
                 `).join('')}
@@ -1761,12 +1541,11 @@ window.createChat = async function() {
     }
     const groupName = document.getElementById('groupName').value.trim();
     if (!groupName) { showToast('Введите название группы', 'error'); return; }
-    if (groupName.length > 30) { showToast('Название группы слишком длинное', 'error'); return; }
     if (selectedGroupMembers.length === 0) { showToast('Добавьте участников', 'error'); return; }
     const members = [currentUser.uid, ...selectedGroupMembers.map(m => m.uid)];
     const chatRef = await addDoc(collection(db, 'chats'), {
-        type: 'group', name: sanitizeInput(groupName), members, admins: [currentUser.uid], createdBy: currentUser.uid,
-        createdAt: serverTimestamp(), lastMessage: `🔒 Группа "${groupName}" создана`, lastMessageTime: serverTimestamp(), unread: {}
+        type: 'group', name: groupName, members, admins: [currentUser.uid], createdBy: currentUser.uid,
+        createdAt: serverTimestamp(), lastMessage: `Группа "${groupName}" создана`, lastMessageTime: serverTimestamp(), unread: {}
     });
     await addDoc(collection(db, 'chats', chatRef.id, 'messages'), {
         type: 'system', text: `🎉 Группа "${groupName}" создана пользователем ${currentUserData.nickname}`,
@@ -1777,7 +1556,7 @@ window.createChat = async function() {
     await selectChat(chatRef.id);
 };
 
-// ============ ПРОФИЛЬ ============
+// Профиль
 window.openProfileModal = function() {
     document.getElementById('profileNickname').value = currentUserData.nickname;
     const profileAvatar = document.getElementById('profileAvatar');
@@ -1785,6 +1564,7 @@ window.openProfileModal = function() {
         profileAvatar.innerHTML = `<img src="${currentUserData.avatar}">`;
     } else {
         profileAvatar.textContent = getInitials(currentUserData.nickname);
+        profileAvatar.style.background = 'linear-gradient(135deg, #6c63ff, #a78bfa)';
     }
     document.getElementById('profileModal').classList.add('active');
 };
@@ -1792,10 +1572,6 @@ window.openProfileModal = function() {
 window.uploadAvatar = async function(event) {
     const file = event.target.files[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-        showToast('Аватар слишком большой (макс. 2MB)', 'error');
-        return;
-    }
     showToast('Загрузка аватара...', 'info');
     const avatarRef = ref(storage, `avatars/${currentUser.uid}`);
     await uploadBytes(avatarRef, file);
@@ -1810,14 +1586,9 @@ window.uploadAvatar = async function(event) {
 window.saveProfile = async function() {
     const newNickname = document.getElementById('profileNickname').value.trim();
     if (!newNickname) return;
-    if (newNickname.length < 3 || newNickname.length > 20) {
-        showToast('Никнейм должен быть от 3 до 20 символов', 'error');
-        return;
-    }
-    const sanitizedNickname = sanitizeInput(newNickname);
-    await updateProfile(auth.currentUser, { displayName: sanitizedNickname });
-    await updateDoc(doc(db, 'users', currentUser.uid), { nickname: sanitizedNickname });
-    currentUserData.nickname = sanitizedNickname;
+    await updateProfile(auth.currentUser, { displayName: newNickname });
+    await updateDoc(doc(db, 'users', currentUser.uid), { nickname: newNickname });
+    currentUserData.nickname = newNickname;
     await loadUserProfile();
     closeModal('profileModal');
     showToast('Профиль обновлён!', 'success');
@@ -1831,7 +1602,7 @@ window.closeModal = function(modalId) {
     document.getElementById(modalId).classList.remove('active');
 };
 
-// ============ ИНФОРМАЦИЯ О ЧАТЕ И АДМИНИСТРИРОВАНИЕ ============
+// Информация о чате и администрирование
 window.openChatInfo = async function() {
     if (!currentChat) return;
     document.getElementById('chatInfoTitle').textContent = currentChat.type === 'group' ? currentChat.name : 'Информация';
@@ -1844,9 +1615,8 @@ window.openChatInfo = async function() {
         content.innerHTML = `
             <div style="text-align:center;">
                 <div class="avatar" style="width:80px; height:80px; margin:0 auto 16px;">${other?.avatar ? `<img src="${other.avatar}">` : getInitials(other?.nickname)}</div>
-                <div style="font-weight:600;">${sanitizeOutput(other?.nickname)}</div>
+                <div style="font-weight:600;">${escapeHtml(other?.nickname)}</div>
                 <div style="color:var(--text-tertiary); margin-top:4px;">${other?.online ? 'В сети' : 'Не в сети'}</div>
-                <div style="margin-top:12px; font-size:0.7rem; color:var(--accent-light);"><i class="fas fa-lock"></i> Защищённый чат</div>
             </div>
         `;
         return;
@@ -1869,13 +1639,13 @@ window.openChatInfo = async function() {
                 <div class="member-item">
                     <div class="avatar" style="width:40px; height:40px;">${m.avatar ? `<img src="${m.avatar}">` : getInitials(m.nickname)}</div>
                     <div style="flex:1;">
-                        <div style="font-weight:500;">${sanitizeOutput(m.nickname)}${isSelf ? ' (Вы)' : ''}</div>
+                        <div style="font-weight:500;">${escapeHtml(m.nickname)}${isSelf ? ' (Вы)' : ''}</div>
                         ${isBanned ? '<div style="font-size:0.7rem; color:var(--red);">Заблокирован</div>' : ''}
                     </div>
                     ${isGroupOwner ? '<span class="role-badge owner">Создатель</span>' : (isGroupAdmin ? '<span class="role-badge admin">Админ</span>' : '')}
                     ${!isSelf && isAdmin ? `
                         <div style="display:flex; gap:6px;">
-                            ${!isGroupOwner && !isBanned ? `<button class="mini-btn danger" onclick="openBanModal('${m.uid}', '${sanitizeOutput(m.nickname)}')">Бан</button>` : ''}
+                            ${!isGroupOwner && !isBanned ? `<button class="mini-btn danger" onclick="openBanModal('${m.uid}', '${escapeHtml(m.nickname)}')">Бан</button>` : ''}
                             ${isBanned ? `<button class="mini-btn primary" onclick="unbanUser('${m.uid}')">Разбан</button>` : ''}
                             ${isOwner && !isGroupOwner ? (isGroupAdmin ? 
                                 `<button class="mini-btn danger" onclick="removeAdmin('${m.uid}')">Снять админа</button>` :
@@ -1886,9 +1656,6 @@ window.openChatInfo = async function() {
                 </div>
             `;
         }).join('')}
-        <div style="margin-top:16px; padding:12px; background:var(--bg-tertiary); border-radius:12px; font-size:0.7rem; color:var(--text-secondary);">
-            <i class="fas fa-shield-alt"></i> Все сообщения в этом чате зашифрованы AES-256
-        </div>
     `;
 };
 
@@ -1907,7 +1674,7 @@ window.removeAdmin = async function(uid) {
 window.openBanModal = function(uid, name) {
     banTargetUid = uid;
     banTargetName = name;
-    document.getElementById('banUserInfo').innerHTML = `Пользователь: <strong>${sanitizeOutput(name)}</strong>`;
+    document.getElementById('banUserInfo').innerHTML = `Пользователь: <strong>${name}</strong>`;
     document.getElementById('banReason').value = '';
     document.getElementById('banDuration').value = '1h';
     document.getElementById('banModal').classList.add('active');
@@ -1925,7 +1692,7 @@ window.executeBan = async function() {
         case '30d': banUntil = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); break;
         default: banUntil = new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000);
     }
-    await updateDoc(doc(db, 'users', banTargetUid), { bannedUntil: banUntil, bannedReason: sanitizeInput(reason) });
+    await updateDoc(doc(db, 'users', banTargetUid), { bannedUntil: banUntil, bannedReason: reason });
     await addDoc(collection(db, 'chats', currentChatId, 'messages'), {
         type: 'system',
         text: `🔨 ${currentUserData.nickname} заблокировал ${banTargetName} до ${banUntil.toLocaleString()} по причине: ${reason}`,
@@ -1945,7 +1712,7 @@ window.unbanUser = async function(uid) {
     openChatInfo();
 };
 
-// ============ WebRTC ЗВОНКИ (скопированы из предыдущей версии) ============
+// ============ НАСТОЯЩИЕ АУДИОЗВОНКИ (WebRTC) ============
 async function getAudioStream() {
     try {
         return await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1985,7 +1752,17 @@ function createPeerConnection(targetUserId, isCaller) {
             startCallTimer();
         } else if (pc.iceConnectionState === 'failed') {
             showToast('Не удалось установить соединение', 'error');
-            endCall();
+            hangUp();
+        } else if (pc.iceConnectionState === 'disconnected') {
+            showToast('Соединение потеряно', 'error');
+            hangUp();
+        }
+    };
+    
+    pc.onconnectionstatechange = () => {
+        console.log('Connection состояние:', pc.connectionState);
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+            hangUp();
         }
     };
     
@@ -2026,7 +1803,7 @@ function listenForSignals(chatId, targetUserId, isCaller) {
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.data));
                     
                 } else if (signal.type === 'endCall') {
-                    endCall();
+                    hangUp();
                     showToast('Собеседник завершил звонок', 'info');
                 }
             } catch(e) { console.error('Ошибка обработки сигнала:', e); }
@@ -2075,7 +1852,7 @@ function showIncomingCall(chatId, callerName, callerId) {
         <div style="display:flex; align-items:center; gap:12px;">
             <div class="avatar" style="width:48px; height:48px;">${getInitials(callerName)}</div>
             <div>
-                <div style="font-weight:600;">${sanitizeOutput(callerName)}</div>
+                <div style="font-weight:600;">${escapeHtml(callerName)}</div>
                 <div style="font-size:0.75rem; color:var(--text-tertiary);">📞 Входящий звонок...</div>
             </div>
         </div>
@@ -2115,6 +1892,12 @@ window.startCall = async function() {
         return;
     }
     
+    // Проверяем, онлайн ли пользователь
+    if (!otherUser.online) {
+        showToast('Пользователь не в сети', 'error');
+        return;
+    }
+    
     try {
         localStream = await getAudioStream();
     } catch (error) {
@@ -2134,7 +1917,7 @@ window.startCall = async function() {
     
     const otherName = otherUser.nickname;
     document.getElementById('callAvatar').innerHTML = getInitials(otherName);
-    document.getElementById('callName').textContent = sanitizeOutput(otherName);
+    document.getElementById('callName').textContent = otherName;
     document.getElementById('callStatus').textContent = 'Звоним...';
     document.getElementById('callTimer').textContent = '';
     document.getElementById('callOverlay').classList.add('active');
@@ -2153,7 +1936,7 @@ window.startCall = async function() {
         if (peerConnection && peerConnection.connectionState !== 'connected' && isCallActive) {
             clearInterval(connectionCheck);
             showToast('Не удалось соединиться. Пользователь не ответил.', 'error');
-            endCall();
+            hangUp();
         }
     }, 30000);
     
@@ -2191,7 +1974,7 @@ window.answerCall = async function(chatId, callerId) {
     const caller = allUsers.find(u => u.uid === callerId);
     const callerName = caller?.nickname || 'Пользователь';
     document.getElementById('callAvatar').innerHTML = getInitials(callerName);
-    document.getElementById('callName').textContent = sanitizeOutput(callerName);
+    document.getElementById('callName').textContent = callerName;
     document.getElementById('callStatus').textContent = 'Соединение...';
     document.getElementById('callTimer').textContent = '';
     document.getElementById('callOverlay').classList.add('active');
@@ -2212,7 +1995,7 @@ window.declineCall = async function(chatId, callerId) {
     showToast('Звонок отклонён', 'info');
 };
 
-window.endCall = function() {
+window.hangUp = function() {
     if (callTimerInterval) clearInterval(callTimerInterval);
     
     if (peerConnection) {
@@ -2283,7 +2066,7 @@ function listenForCallOffers() {
     });
 }
 
-// ============ АВТОРИЗАЦИЯ ============
+// Auth state
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -2291,8 +2074,7 @@ onAuthStateChanged(auth, async (user) => {
         if (!userDoc.exists()) {
             await setDoc(doc(db, 'users', user.uid), {
                 uid: user.uid, nickname: user.displayName || 'User', email: user.email,
-                avatar: null, role: 'member', online: true, createdAt: serverTimestamp(), 
-                bannedUntil: null, loginAttempts: 0
+                avatar: null, role: 'member', online: true, createdAt: serverTimestamp(), bannedUntil: null
             });
             currentUserData = { uid: user.uid, nickname: user.displayName || 'User', role: 'member' };
         } else {
@@ -2313,19 +2095,18 @@ onAuthStateChanged(auth, async (user) => {
         listenForCallOffers();
     } else {
         if (currentUser) await updateDoc(doc(db, 'users', currentUser.uid), { online: false }).catch(() => {});
-        if (isCallActive) endCall();
+        if (isCallActive) hangUp();
         document.getElementById('authScreen').style.display = 'flex';
         document.getElementById('mainApp').classList.remove('active');
         currentUser = null;
         if (messagesUnsubscribe) messagesUnsubscribe();
         if (chatsUnsubscribe) chatsUnsubscribe();
-        userEncryptionKey = null;
     }
 });
 
-console.log('🔒 Ysend с полным шифрованием загружен!');
+console.log('📞 Ysend с НАСТОЯЩИМИ аудиозвонками загружен!');
 console.log('👑 Аккаунт Yura: yura@ysend.com / 5638Yura');
-console.log('🛡️ Защита: AES-256 шифрование, CSP, защита от XSS, Rate limiting');
+console.log('🔄 Звонки работают через WebRTC с TURN серверами');
 </script>
 </body>
 </html>
