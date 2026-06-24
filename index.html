@@ -90,12 +90,28 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .icon-btn:hover{background:var(--surface3);color:var(--text)}
 
 .search-wrap{padding:10px 16px;border-bottom:1px solid var(--border)}
-.search-input{
-  width:100%;background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;
-  outline:none;
+.search-pill{
+  display:flex;align-items:center;gap:8px;width:100%;background:var(--surface2);
+  border:1px solid var(--border);border-radius:20px;padding:9px 14px;
+  transition:border-color .2s,background .2s;
 }
-.search-input:focus{border-color:var(--accent)}
+.search-pill:focus-within{border-color:var(--accent);background:var(--surface3)}
+.search-pill svg{flex-shrink:0;color:var(--text3);transition:color .2s}
+.search-pill:focus-within svg{color:var(--accent2)}
+.search-input{
+  flex:1;background:transparent;border:none;color:var(--text);
+  font-family:'Syne',sans-serif;font-size:13px;outline:none;min-width:0;
+}
+.search-input::placeholder{color:var(--text3)}
+
+/* ICON BUTTONS */
+.icon-btn svg{width:17px;height:17px}
+.attach-opt svg{width:16px;height:16px;flex-shrink:0;color:var(--accent2)}
+.call-btn svg{width:24px;height:24px}
+.send-btn svg{width:18px;height:18px}
+.record-btn svg{width:18px;height:18px}
+.voice-play svg{width:13px;height:13px}
+.msg-file svg{width:18px;height:18px;color:var(--accent2);flex-shrink:0}
 
 .chat-list{flex:1;overflow-y:auto;padding:8px}
 .chat-item{
@@ -304,6 +320,25 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .call-btn.mute{background:var(--surface3)}
 .call-btn.answer{background:var(--green)}
 
+/* INCOMING CALL */
+#incomingCallScreen{
+  position:fixed;inset:0;background:rgba(10,10,15,.95);backdrop-filter:blur(10px);z-index:400;
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+}
+#incomingCallScreen.active{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.incoming-avatar{
+  width:96px;height:96px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:700;
+  overflow:hidden;border:4px solid var(--accent2);animation:ringPulse 1.4s infinite;
+}
+.incoming-avatar img{width:100%;height:100%;object-fit:cover}
+@keyframes ringPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,106,247,.5)}50%{box-shadow:0 0 0 20px rgba(124,106,247,0)}}
+.incoming-name{font-size:22px;font-weight:800}
+.incoming-sub{color:var(--text2);font-size:13px}
+.incoming-actions{display:flex;gap:28px;margin-top:14px}
+.call-btn.decline{background:var(--red)}
+
 /* VIDEO CALL */
 #videoCallScreen{
   position:fixed;inset:0;background:#000;z-index:300;display:none;
@@ -370,13 +405,22 @@ input[type=file]{display:none}
       <div class="my-avatar" id="myAvatar" onclick="openProfile()">?</div>
       <div class="my-name" id="myName" onclick="openProfile()">...</div>
       <div class="sidebar-actions">
-        <button class="icon-btn" onclick="openNewChat()" title="Новый чат">✏️</button>
-        <button class="icon-btn" onclick="openNewGroup()" title="Создать группу">👥</button>
-        <button class="icon-btn" onclick="doLogout()" title="Выйти">🚪</button>
+        <button class="icon-btn" onclick="openNewChat()" title="Новый чат">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="icon-btn" onclick="openNewGroup()" title="Создать группу">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </button>
+        <button class="icon-btn" onclick="doLogout()" title="Выйти">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </div>
     </div>
     <div class="search-wrap">
-      <input class="search-input" placeholder="🔍  Поиск чатов..." oninput="filterChats(this.value)"/>
+      <div class="search-pill">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" placeholder="Поиск чатов..." oninput="filterChats(this.value)"/>
+      </div>
     </div>
     <div class="chat-list" id="chatList"></div>
   </div>
@@ -395,24 +439,43 @@ input[type=file]{display:none}
           <div class="ch-status" id="chStatus"></div>
         </div>
         <div class="ch-actions">
-          <button class="icon-btn" id="callBtn" onclick="startCall('audio')" title="Аудиозвонок">📞</button>
-          <button class="icon-btn" id="videoCallBtn" onclick="startCall('video')" title="Видеозвонок">📹</button>
+          <button class="icon-btn" id="callBtn" onclick="startCall('audio')" title="Аудиозвонок">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </button>
+          <button class="icon-btn" id="videoCallBtn" onclick="startCall('video')" title="Видеозвонок">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          </button>
         </div>
       </div>
       <div class="messages-area" id="messagesArea"></div>
       <div class="input-area">
         <div class="attach-menu">
-          <button class="icon-btn" onclick="toggleAttach()" style="width:44px;height:44px">📎</button>
+          <button class="icon-btn" onclick="toggleAttach()" style="width:44px;height:44px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
           <div class="attach-popup" id="attachPopup">
-            <div class="attach-opt" onclick="triggerFile('image')">🖼️ Фото</div>
-            <div class="attach-opt" onclick="triggerFile('video')">🎬 Видео</div>
-            <div class="attach-opt" onclick="triggerFile('any')">📄 Файл</div>
+            <div class="attach-opt" onclick="triggerFile('image')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Фото
+            </div>
+            <div class="attach-opt" onclick="triggerFile('video')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              Видео
+            </div>
+            <div class="attach-opt" onclick="triggerFile('any')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Файл
+            </div>
           </div>
         </div>
         <textarea class="msg-input" id="msgInput" placeholder="Сообщение..." rows="1"
           onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-        <button class="record-btn" id="recordBtn" onclick="toggleRecord()" title="Голосовое">🎤</button>
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <button class="record-btn" id="recordBtn" onclick="toggleRecord()" title="Голосовое">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <button class="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -467,14 +530,33 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- INCOMING CALL SCREEN -->
+<div id="incomingCallScreen">
+  <div class="incoming-avatar" id="incomingAvatar">?</div>
+  <div class="incoming-name" id="incomingName">...</div>
+  <div class="incoming-sub" id="incomingSub">Входящий звонок...</div>
+  <div class="incoming-actions">
+    <button class="call-btn decline" onclick="declineCall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" transform="rotate(135 12 12)"/></svg>
+    </button>
+    <button class="call-btn answer" onclick="answerCall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </button>
+  </div>
+</div>
+
 <!-- CALL SCREEN -->
 <div id="callScreen">
   <div class="call-avatar" id="callAvatar"></div>
   <div class="call-name" id="callName">...</div>
   <div class="call-status" id="callStatus">Вызов...</div>
   <div class="call-actions">
-    <button class="call-btn mute" onclick="toggleMute()">🔇</button>
-    <button class="call-btn end" onclick="endCall()">📵</button>
+    <button class="call-btn mute" id="muteBtn1" onclick="toggleMute()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button class="call-btn end" onclick="endCall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" transform="rotate(135 12 12)"/></svg>
+    </button>
   </div>
 </div>
 
@@ -483,8 +565,12 @@ input[type=file]{display:none}
   <video id="remoteVideo" autoplay playsinline></video>
   <video id="localVideo" autoplay playsinline muted></video>
   <div class="video-call-actions">
-    <button class="call-btn mute" onclick="toggleMute()">🔇</button>
-    <button class="call-btn end" onclick="endCall()">📵</button>
+    <button class="call-btn mute" id="muteBtn2" onclick="toggleMute()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button class="call-btn end" onclick="endCall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" transform="rotate(135 12 12)"/></svg>
+    </button>
   </div>
 </div>
 
@@ -566,6 +652,7 @@ window.doRegister = async () => {
 window.doLogout = async () => {
   if(chatsUnsub) chatsUnsub();
   if(messagesUnsub) messagesUnsub();
+  if(globalCallListenerUnsub) globalCallListenerUnsub();
   await signOut(auth);
 };
 
@@ -578,6 +665,7 @@ onAuthStateChanged(auth, async (user) => {
     await setDoc(doc(db,'users',user.uid), {online:true}, {merge:true});
     loadMyProfile();
     listenChats();
+    listenIncomingCalls();
   } else {
     currentUser = null;
     document.getElementById('authScreen').style.display = 'flex';
@@ -760,7 +848,7 @@ async function renderMessages(msgs) {
     else if(msg.type==='image') content = `<div class="msg-bubble" style="padding:4px"><img class="msg-img" src="${msg.url}" onclick="window.open('${msg.url}')"/></div>`;
     else if(msg.type==='video') content = `<div class="msg-bubble" style="padding:4px"><video class="msg-video" controls src="${msg.url}"></video></div>`;
     else if(msg.type==='voice') content = renderVoice(msg.url);
-    else if(msg.type==='file') content = `<div class="msg-file" onclick="window.open('${msg.url}')">📄 <span>${msg.fileName||'Файл'}</span></div>`;
+    else if(msg.type==='file') content = `<div class="msg-file" onclick="window.open('${msg.url}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${msg.fileName||'Файл'}</span></div>`;
 
     row.innerHTML = `
       ${!isOut?`<div class="msg-avatar">${ud.photoURL?`<img src="${ud.photoURL}"/>`:(ud.name||'?')[0].toUpperCase()}</div>`:''}
@@ -778,7 +866,9 @@ function renderVoice(url) {
   const id = 'v'+Math.random().toString(36).slice(2);
   const bars = Array.from({length:20},(_,i)=>`<div class="voice-bar" style="height:${8+Math.sin(i*.8)*8}px"></div>`).join('');
   return `<div class="msg-voice">
-    <button class="voice-play" onclick="playVoice('${url}','${id}')">▶</button>
+    <button class="voice-play" onclick="playVoice('${url}','${id}')" id="${id}_btn">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </button>
     <div class="voice-wave">${bars}</div>
     <audio id="${id}" src="${url}"></audio>
   </div>`;
@@ -786,7 +876,15 @@ function renderVoice(url) {
 
 window.playVoice = (url, id) => {
   const a = document.getElementById(id);
-  if(a.paused){a.play()}else{a.pause()}
+  const btn = document.getElementById(id+'_btn');
+  if(a.paused){
+    a.play();
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+    a.onended = () => { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>'; };
+  } else {
+    a.pause();
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }
 };
 
 // ───── SEND MESSAGE ─────
@@ -862,13 +960,13 @@ window.toggleRecord = async () => {
       mediaRecorder.start();
       isRecording = true;
       document.getElementById('recordBtn').classList.add('recording');
-      document.getElementById('recordBtn').textContent = '⏹';
+      document.getElementById('recordBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
     } catch(e) { alert('Нет доступа к микрофону'); }
   } else {
     mediaRecorder.stop();
     isRecording = false;
     document.getElementById('recordBtn').classList.remove('recording');
-    document.getElementById('recordBtn').textContent = '🎤';
+    document.getElementById('recordBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
   }
 };
 
@@ -986,16 +1084,130 @@ window.createGroup = async () => {
 };
 
 // ───── CALLS (WebRTC) ─────
-const iceConfig = {iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const iceConfig = {iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+let activeCallChatId = null;
+let isCaller = false;
+let candidatesUnsub = null;
+let callDocUnsub = null;
+let globalCallListenerUnsub = null;
+let ringtoneTimeout = null;
+
+// Listen globally for incoming calls addressed to me
+function listenIncomingCalls() {
+  const q = query(collection(db,'calls'), where('calleeId','==',currentUser.uid));
+  globalCallListenerUnsub = onSnapshot(q, snap => {
+    snap.docChanges().forEach(change => {
+      const data = change.doc.data();
+      const chatId = change.doc.id;
+      if(change.type !== 'removed' && data.status === 'ringing' && chatId !== activeCallChatId) {
+        showIncomingCall(chatId, data);
+      }
+      if(data.status === 'ended' && chatId === activeCallChatId) {
+        cleanupCall();
+      }
+    });
+  });
+}
+
+async function showIncomingCall(chatId, data) {
+  activeCallChatId = chatId;
+  callType = data.callType;
+  isCaller = false;
+  const uSnap = await getDoc(doc(db,'users',data.callerId));
+  const ud = uSnap.data()||{};
+  document.getElementById('incomingAvatar').innerHTML = ud.photoURL?`<img src="${ud.photoURL}"/>`:(ud.name||'?')[0].toUpperCase();
+  document.getElementById('incomingName').textContent = ud.name||'Пользователь';
+  document.getElementById('incomingSub').textContent = data.callType==='video' ? 'Входящий видеозвонок...' : 'Входящий звонок...';
+  document.getElementById('incomingCallScreen').classList.add('active');
+
+  // Auto-hide if caller cancels
+  callDocUnsub = onSnapshot(doc(db,'calls',chatId), s => {
+    const d = s.data();
+    if(!d || d.status==='ended' || d.status==='cancelled') {
+      document.getElementById('incomingCallScreen').classList.remove('active');
+      if(callDocUnsub) { callDocUnsub(); callDocUnsub=null; }
+      activeCallChatId = null;
+    }
+  });
+}
+
+window.declineCall = async () => {
+  if(activeCallChatId) {
+    await updateDoc(doc(db,'calls',activeCallChatId), {status:'ended'});
+  }
+  document.getElementById('incomingCallScreen').classList.remove('active');
+  if(callDocUnsub) { callDocUnsub(); callDocUnsub=null; }
+  activeCallChatId = null;
+};
+
+window.answerCall = async () => {
+  document.getElementById('incomingCallScreen').classList.remove('active');
+  if(callDocUnsub) { callDocUnsub(); callDocUnsub=null; }
+
+  const chatId = activeCallChatId;
+  const callSnap = await getDoc(doc(db,'calls',chatId));
+  const callData = callSnap.data();
+  if(!callData) return;
+
+  if(callType==='video') document.getElementById('videoCallScreen').classList.add('active');
+  else {
+    document.getElementById('callScreen').classList.add('active');
+    const uSnap = await getDoc(doc(db,'users',callData.callerId));
+    const ud = uSnap.data()||{};
+    document.getElementById('callAvatar').innerHTML = ud.photoURL?`<img src="${ud.photoURL}"/>`:(ud.name||'?')[0].toUpperCase();
+    document.getElementById('callName').textContent = ud.name||'?';
+    document.getElementById('callStatus').textContent = 'Соединение...';
+  }
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(
+      callType==='video' ? {video:true,audio:true} : {audio:true}
+    );
+    if(callType==='video') document.getElementById('localVideo').srcObject = localStream;
+  } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
+
+  peerConnection = new RTCPeerConnection(iceConfig);
+  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+  peerConnection.ontrack = e => {
+    if(callType==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
+    else document.getElementById('callStatus').textContent = 'Соединено';
+  };
+  peerConnection.onicecandidate = e => {
+    if(e.candidate) addDoc(collection(db,'calls',chatId,'calleeCandidates'), e.candidate.toJSON());
+  };
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  await updateDoc(doc(db,'calls',chatId), {answer:{type:answer.type,sdp:answer.sdp}, status:'accepted'});
+
+  // Listen for caller's ICE candidates
+  candidatesUnsub = onSnapshot(collection(db,'calls',chatId,'callerCandidates'), snap => {
+    snap.docChanges().forEach(c => {
+      if(c.type==='added' && peerConnection) peerConnection.addIceCandidate(new RTCIceCandidate(c.doc.data()));
+    });
+  });
+
+  watchCallEnd(chatId);
+};
+
+function watchCallEnd(chatId) {
+  callDocUnsub = onSnapshot(doc(db,'calls',chatId), s => {
+    const d = s.data();
+    if(!d || d.status==='ended') cleanupCall();
+  });
+}
 
 window.startCall = async (type) => {
   if(!currentChatData || currentChatType!=='direct') return;
   callType = type;
+  isCaller = true;
   const otherId = currentChatData.members.find(m=>m!==currentUser.uid);
+  const chatId = currentChatId;
+  activeCallChatId = chatId;
   const uSnap = await getDoc(doc(db,'users',otherId));
   const ud = uSnap.data()||{};
 
-  // Show call UI
   if(type==='video') {
     document.getElementById('videoCallScreen').classList.add('active');
   } else {
@@ -1006,62 +1218,80 @@ window.startCall = async (type) => {
     document.getElementById('callStatus').textContent = 'Вызов...';
   }
 
-  // Get media
   try {
     localStream = await navigator.mediaDevices.getUserMedia(
       type==='video' ? {video:true,audio:true} : {audio:true}
     );
     if(type==='video') document.getElementById('localVideo').srcObject = localStream;
-  } catch(e) { alert('Нет доступа к камере/микрофону'); endCall(); return; }
+  } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
 
   peerConnection = new RTCPeerConnection(iceConfig);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-
   peerConnection.ontrack = e => {
     if(type==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
+    else document.getElementById('callStatus').textContent = 'Соединено';
   };
-
-  peerConnection.onicecandidate = async e => {
-    if(e.candidate) {
-      await addDoc(collection(db,'calls',currentChatId,'candidates_'+currentUser.uid), e.candidate.toJSON());
-    }
+  peerConnection.onicecandidate = e => {
+    if(e.candidate) addDoc(collection(db,'calls',chatId,'callerCandidates'), e.candidate.toJSON());
   };
 
   const offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
 
-  await setDoc(doc(db,'calls',currentChatId), {
+  await setDoc(doc(db,'calls',chatId), {
     offer:{type:offer.type,sdp:offer.sdp},
     callerId:currentUser.uid,
+    calleeId:otherId,
     callType:type,
     status:'ringing'
   });
 
   // Listen for answer
-  onSnapshot(doc(db,'calls',currentChatId), async snap => {
+  callDocUnsub = onSnapshot(doc(db,'calls',chatId), async snap => {
     const data = snap.data();
-    if(data?.answer && peerConnection.signalingState==='have-local-offer') {
+    if(!data) return;
+    if(data.answer && peerConnection && peerConnection.signalingState==='have-local-offer') {
       await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
       if(type==='audio') document.getElementById('callStatus').textContent = 'Соединено';
     }
-    if(data?.status==='ended') endCall();
+    if(data.status==='ended') cleanupCall();
+  });
+
+  candidatesUnsub = onSnapshot(collection(db,'calls',chatId,'calleeCandidates'), snap => {
+    snap.docChanges().forEach(c => {
+      if(c.type==='added' && peerConnection) peerConnection.addIceCandidate(new RTCIceCandidate(c.doc.data()));
+    });
   });
 };
 
 window.endCall = async () => {
+  if(activeCallChatId) {
+    try { await updateDoc(doc(db,'calls',activeCallChatId), {status:'ended'}); } catch(e){}
+  }
+  cleanupCall();
+};
+
+function cleanupCall() {
   if(peerConnection) { peerConnection.close(); peerConnection = null; }
   if(localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream=null; }
+  if(candidatesUnsub) { candidatesUnsub(); candidatesUnsub=null; }
+  if(callDocUnsub) { callDocUnsub(); callDocUnsub=null; }
   document.getElementById('callScreen').classList.remove('active');
   document.getElementById('videoCallScreen').classList.remove('active');
-  if(currentChatId) {
-    try { await updateDoc(doc(db,'calls',currentChatId),{status:'ended'}); } catch(e){}
-  }
-};
+  document.getElementById('incomingCallScreen').classList.remove('active');
+  activeCallChatId = null;
+  isCaller = false;
+  isMuted = false;
+}
 
 window.toggleMute = () => {
   if(!localStream) return;
   isMuted = !isMuted;
   localStream.getAudioTracks().forEach(t=>t.enabled=!isMuted);
+  const icon = isMuted
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  ['muteBtn1','muteBtn2'].forEach(id=>{const el=document.getElementById(id); if(el) el.innerHTML=icon;});
 };
 
 // ───── MODALS ─────
