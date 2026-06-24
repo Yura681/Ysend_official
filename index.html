@@ -729,14 +729,12 @@ function listenChats() {
   });
 }
 
+let chatListRenderGen = 0;
 async function renderChatList(chats) {
+  const myGen = ++chatListRenderGen;
   const list = document.getElementById('chatList');
-  list.innerHTML = '';
-  for(const chat of chats) {
-    const item = document.createElement('div');
-    item.className = 'chat-item' + (chat.id===currentChatId?' active':'');
-    item.onclick = () => openChat(chat);
 
+  const items = await Promise.all(chats.map(async (chat) => {
     let name = '', photo = '', isOnline = false;
     if(chat.type==='group') {
       name = chat.name || 'Группа';
@@ -750,6 +748,17 @@ async function renderChatList(chats) {
         isOnline = ud.online||false;
       }
     }
+    return {chat, name, photo, isOnline};
+  }));
+
+  if(myGen !== chatListRenderGen) return; // a newer render started, discard this one
+
+  list.innerHTML = '';
+  for(const {chat, name, photo, isOnline} of items) {
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (chat.id===currentChatId?' active':'');
+    item.setAttribute('data-chat-id', chat.id);
+    item.onclick = () => openChat(chat);
 
     const initials = name[0]?.toUpperCase()||'?';
     item.innerHTML = `
@@ -786,7 +795,9 @@ async function openChat(chat) {
   ca.style.display = 'flex';
 
   // Update active state
-  document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.chat-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-chat-id')===chat.id);
+  });
 
   // Set header
   let name='', photo='', status='';
@@ -819,8 +830,6 @@ async function openChat(chat) {
   messagesUnsub = onSnapshot(q, snap => {
     renderMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
   });
-
-  listenChats();
 }
 
 // ───── MESSAGES ─────
@@ -923,17 +932,22 @@ window.triggerFile = (type) => {
 window.uploadFile = async (input, type) => {
   if(!input.files[0] || !currentChatId) return;
   const file = input.files[0];
-  const r = ref(storage, `chats/${currentChatId}/${Date.now()}_${file.name}`);
-  await uploadBytes(r, file);
-  const url = await getDownloadURL(r);
-  const msgData = {sender:currentUser.uid, time:serverTimestamp(), url};
-  if(type==='image') { msgData.type='image'; }
-  else if(type==='video') { msgData.type='video'; }
-  else { msgData.type='file'; msgData.fileName=file.name; }
-  await addDoc(collection(db,'chats',currentChatId,'messages'), msgData);
-  await updateDoc(doc(db,'chats',currentChatId), {
-    lastMsg:`[${type==='image'?'Фото':type==='video'?'Видео':'Файл'}]`, lastTime:serverTimestamp()
-  });
+  try {
+    const r = ref(storage, `chats/${currentChatId}/${Date.now()}_${file.name}`);
+    await uploadBytes(r, file);
+    const url = await getDownloadURL(r);
+    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url};
+    if(type==='image') { msgData.type='image'; }
+    else if(type==='video') { msgData.type='video'; }
+    else { msgData.type='file'; msgData.fileName=file.name; }
+    await addDoc(collection(db,'chats',currentChatId,'messages'), msgData);
+    await updateDoc(doc(db,'chats',currentChatId), {
+      lastMsg:`[${type==='image'?'Фото':type==='video'?'Видео':'Файл'}]`, lastTime:serverTimestamp()
+    });
+  } catch(e) {
+    console.error(e);
+    alert('Не удалось загрузить файл: ' + (e.code || e.message) + '\nПроверь, что Firebase Storage включён и проект на плане Blaze.');
+  }
   input.value = '';
 };
 
@@ -949,13 +963,18 @@ window.toggleRecord = async () => {
         const blob = new Blob(audioChunks, {type:'audio/webm'});
         stream.getTracks().forEach(t=>t.stop());
         if(!currentChatId) return;
-        const r = ref(storage, `chats/${currentChatId}/voice_${Date.now()}.webm`);
-        await uploadBytes(r, blob);
-        const url = await getDownloadURL(r);
-        await addDoc(collection(db,'chats',currentChatId,'messages'), {
-          type:'voice', url, sender:currentUser.uid, time:serverTimestamp()
-        });
-        await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'🎤 Голосовое', lastTime:serverTimestamp()});
+        try {
+          const r = ref(storage, `chats/${currentChatId}/voice_${Date.now()}.webm`);
+          await uploadBytes(r, blob);
+          const url = await getDownloadURL(r);
+          await addDoc(collection(db,'chats',currentChatId,'messages'), {
+            type:'voice', url, sender:currentUser.uid, time:serverTimestamp()
+          });
+          await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'Голосовое сообщение', lastTime:serverTimestamp()});
+        } catch(e) {
+          console.error(e);
+          alert('Не удалось загрузить голосовое: ' + (e.code || e.message) + '\nПроверь, что Firebase Storage включён и проект на плане Blaze.');
+        }
       };
       mediaRecorder.start();
       isRecording = true;
