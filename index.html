@@ -152,7 +152,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .ch-avatar{
   width:40px;height:40px;border-radius:50%;background:var(--accent);
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;
-  overflow:hidden;flex-shrink:0;cursor:pointer;
+  overflow:hidden;flex-shrink:0;
 }
 .ch-avatar img{width:100%;height:100%;object-fit:cover}
 .ch-info{flex:1}
@@ -369,14 +369,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .section-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:8px 10px 4px}
 
 input[type=file]{display:none}
-
-/* GROUP AVATAR PREVIEW */
-.group-avatar-preview{
-  width:50px;height:50px;border-radius:50%;background:var(--accent);
-  display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;
-  overflow:hidden;flex-shrink:0;
-}
-.group-avatar-preview img{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -413,9 +405,6 @@ input[type=file]{display:none}
       <div class="my-avatar" id="myAvatar" onclick="openProfile()">?</div>
       <div class="my-name" id="myName" onclick="openProfile()">...</div>
       <div class="sidebar-actions">
-        <button class="icon-btn" onclick="openNewChat()" title="Новый чат">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
         <button class="icon-btn" onclick="openNewGroup()" title="Создать группу">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         </button>
@@ -427,7 +416,7 @@ input[type=file]{display:none}
     <div class="search-wrap">
       <div class="search-pill">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input class="search-input" placeholder="Поиск чатов..." oninput="filterChats(this.value)"/>
+        <input class="search-input" id="mainSearchInput" placeholder="Поиск чатов и людей..." oninput="filterChats(this.value)"/>
       </div>
     </div>
     <div class="chat-list" id="chatList"></div>
@@ -441,7 +430,7 @@ input[type=file]{display:none}
     </div>
     <div id="chatArea" style="display:none;flex-direction:column;height:100%">
       <div class="chat-header" id="chatHeader">
-        <div class="ch-avatar" id="chAvatar" onclick="onAvatarClick()"></div>
+        <div class="ch-avatar" id="chAvatar"></div>
         <div class="ch-info">
           <div class="ch-name" id="chName"></div>
           <div class="ch-status" id="chStatus"></div>
@@ -494,18 +483,6 @@ input[type=file]{display:none}
 <input type="file" id="fileVideo" accept="video/*" onchange="uploadFile(this,'video')"/>
 <input type="file" id="fileAny" onchange="uploadFile(this,'file')"/>
 
-<!-- NEW CHAT MODAL -->
-<div class="modal-bg" id="newChatModal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal('newChatModal')">✕</button>
-    <h2>Новый чат</h2>
-    <div class="field"><label>Поиск пользователей</label>
-      <input type="text" id="userSearch" placeholder="Email или имя..." oninput="searchUsers(this.value)" class="field input" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
-    </div>
-    <div id="userResults"></div>
-  </div>
-</div>
-
 <!-- NEW GROUP MODAL -->
 <div class="modal-bg" id="newGroupModal">
   <div class="modal">
@@ -513,14 +490,6 @@ input[type=file]{display:none}
     <h2>Создать группу</h2>
     <div class="field"><label>Название группы</label>
       <input type="text" id="groupName" placeholder="Название..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
-    </div>
-    <div class="field">
-      <label>Аватар группы</label>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="group-avatar-preview" id="groupAvatarPreview">G</div>
-        <button class="btn-primary" style="width:auto;padding:6px 16px;" onclick="document.getElementById('groupAvatarInput').click()">Загрузить</button>
-        <input type="file" id="groupAvatarInput" accept="image/*" onchange="previewGroupAvatar(this)"/>
-      </div>
     </div>
     <div class="field"><label>Добавить участников</label>
       <input type="text" id="groupSearch" placeholder="Поиск пользователей..." oninput="searchGroupUsers(this.value)" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
@@ -543,17 +512,6 @@ input[type=file]{display:none}
       <input type="text" id="profileName" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
     </div>
     <button class="btn-primary" onclick="saveProfile()">Сохранить</button>
-  </div>
-</div>
-
-<!-- GROUP AVATAR MODAL -->
-<div class="modal-bg" id="groupAvatarModal">
-  <div class="modal" style="text-align:center">
-    <button class="modal-close" onclick="closeModal('groupAvatarModal')">✕</button>
-    <h2>Аватар группы</h2>
-    <div class="profile-avatar-wrap" id="groupAvatarModalPreview" onclick="document.getElementById('groupAvatarModalInput').click()">G</div>
-    <input type="file" id="groupAvatarModalInput" accept="image/*" onchange="uploadGroupAvatar(this)"/>
-    <button class="btn-primary" onclick="closeModal('groupAvatarModal')">Готово</button>
   </div>
 </div>
 
@@ -610,14 +568,12 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
   onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-yTlSlnozIhdpp-0vfAoZK92PHUMf_jU",
   authDomain: "ysend-e71e6.firebaseapp.com",
   projectId: "ysend-e71e6",
-  storageBucket: "ysend-e71e6.appspot.com", // исправлено
+  storageBucket: "ysend-e71e6.firebasestorage.app",
   messagingSenderId: "78110029191",
   appId: "1:78110029191:web:6c4bdf3a40ee0664c6cf22"
 };
@@ -625,7 +581,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+
+let recordTimeout = null;
 
 let currentUser = null;
 let currentChatId = null;
@@ -641,7 +598,6 @@ let peerConnection = null;
 let selectedGroupMembers = [];
 let isMuted = false;
 let callType = null;
-let groupAvatarFile = null; // для хранения файла аватарки при создании группы
 
 // ───── AUTH ─────
 window.switchTab = (tab) => {
@@ -689,6 +645,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     document.getElementById('authScreen').style.display = 'none';
     document.getElementById('app').classList.add('visible');
+    // Update online status
     await setDoc(doc(db,'users',user.uid), {online:true}, {merge:true});
     loadMyProfile();
     listenChats();
@@ -727,18 +684,17 @@ window.uploadAvatar = async (input) => {
   if(!input.files[0]) return;
   const file = input.files[0];
   try {
-    const r = ref(storage, `avatars/${currentUser.uid}`);
-    await uploadBytes(r, file);
-    const url = await getDownloadURL(r);
-    await updateDoc(doc(db,'users',currentUser.uid), {photoURL:url});
-    await updateProfile(currentUser, {photoURL:url});
+    const dataUrl = await compressImage(file, 320, 0.8);
+    checkSize(dataUrl, 'Аватар');
+    await updateDoc(doc(db,'users',currentUser.uid), {photoURL:dataUrl});
     const wrap = document.getElementById('profileAvatarWrap');
-    wrap.innerHTML = `<img src="${url}"/>`;
+    wrap.innerHTML = `<img src="${dataUrl}"/>`;
     loadMyProfile();
   } catch(e) {
-    console.error('Upload avatar error:', e);
-    alert('Ошибка загрузки аватарки: ' + (e.code || e.message));
+    console.error(e);
+    alert('Не удалось загрузить аватар: ' + e.message);
   }
+  input.value = '';
 };
 
 window.saveProfile = async () => {
@@ -767,12 +723,11 @@ async function renderChatList(chats) {
   const list = document.getElementById('chatList');
 
   const items = await Promise.all(chats.map(async (chat) => {
-    let name = '', photo = '', isOnline = false;
+    let name = '', photo = '', isOnline = false, otherId = null;
     if(chat.type==='group') {
       name = chat.name || 'Группа';
-      photo = chat.photoURL || '';
     } else {
-      const otherId = chat.members.find(m=>m!==currentUser.uid);
+      otherId = chat.members.find(m=>m!==currentUser.uid);
       if(otherId) {
         const uSnap = await getDoc(doc(db,'users',otherId));
         const ud = uSnap.data()||{};
@@ -781,17 +736,17 @@ async function renderChatList(chats) {
         isOnline = ud.online||false;
       }
     }
-    return {chat, name, photo, isOnline};
+    return {chat, name, photo, isOnline, otherId};
   }));
 
-  // отмена устаревшего рендера
-  if(myGen !== chatListRenderGen) return;
+  if(myGen !== chatListRenderGen) return; // a newer render started, discard this one
 
   list.innerHTML = '';
-  for(const {chat, name, photo, isOnline} of items) {
+  for(const {chat, name, photo, isOnline, otherId} of items) {
     const item = document.createElement('div');
     item.className = 'chat-item' + (chat.id===currentChatId?' active':'');
     item.setAttribute('data-chat-id', chat.id);
+    if(otherId) item.setAttribute('data-partner-id', otherId);
     item.onclick = () => openChat(chat);
 
     const initials = name[0]?.toUpperCase()||'?';
@@ -811,12 +766,59 @@ async function renderChatList(chats) {
   }
 }
 
+let searchDebounce = null;
 window.filterChats = (val) => {
-  document.querySelectorAll('.chat-item').forEach(el => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => doSearch(val), 200);
+};
+
+async function doSearch(val) {
+  // clear previous "new chat" suggestions
+  document.querySelectorAll('.search-suggestion').forEach(el => el.remove());
+
+  // filter existing chats by name
+  const knownPartnerIds = new Set();
+  document.querySelectorAll('.chat-item:not(.search-suggestion)').forEach(el => {
     const name = el.querySelector('.ci-name').textContent.toLowerCase();
     el.style.display = name.includes(val.toLowerCase()) ? '' : 'none';
+    if(el.getAttribute('data-partner-id')) knownPartnerIds.add(el.getAttribute('data-partner-id'));
   });
-};
+
+  if(val.trim().length < 2) return;
+
+  // also search for people to start a new chat with
+  const snap = await getDocs(collection(db,'users'));
+  const list = document.getElementById('chatList');
+  const matches = [];
+  snap.forEach(d => {
+    const u = d.data();
+    if(u.uid===currentUser.uid) return;
+    if(knownPartnerIds.has(u.uid)) return; // already have a chat with them
+    const hay = (u.name||'') + ' ' + (u.email||'');
+    if(!hay.toLowerCase().includes(val.toLowerCase())) return;
+    matches.push(u);
+  });
+  if(matches.length === 0) return;
+
+  const label = document.createElement('div');
+  label.className = 'section-label search-suggestion';
+  label.textContent = 'Начать новый чат';
+  list.appendChild(label);
+
+  matches.forEach(u => {
+    const item = document.createElement('div');
+    item.className = 'chat-item search-suggestion';
+    const initials = (u.name||'?')[0].toUpperCase();
+    item.innerHTML = `
+      <div class="ci-avatar">${u.photoURL?`<img src="${u.photoURL}"/>`:`<span>${initials}</span>`}</div>
+      <div class="ci-info">
+        <div class="ci-name">${u.name||'?'}</div>
+        <div class="ci-last">${u.email||''}</div>
+      </div>`;
+    item.onclick = () => startDirectChat(u);
+    list.appendChild(item);
+  });
+}
 
 // ───── OPEN CHAT ─────
 async function openChat(chat) {
@@ -834,7 +836,29 @@ async function openChat(chat) {
   });
 
   // Set header
-  updateChatHeader(chat);
+  let name='', photo='', status='';
+  if(chat.type==='group') {
+    name = chat.name||'Группа';
+    status = `${chat.members.length} участников`;
+    document.getElementById('callBtn').style.display = 'none';
+    document.getElementById('videoCallBtn').style.display = 'none';
+  } else {
+    const otherId = chat.members.find(m=>m!==currentUser.uid);
+    if(otherId) {
+      const uSnap = await getDoc(doc(db,'users',otherId));
+      const ud = uSnap.data()||{};
+      name = ud.name||'Пользователь';
+      photo = ud.photoURL||'';
+      status = ud.online ? '● В сети' : 'Не в сети';
+    }
+    document.getElementById('callBtn').style.display = '';
+    document.getElementById('videoCallBtn').style.display = '';
+  }
+
+  document.getElementById('chName').textContent = name;
+  document.getElementById('chStatus').textContent = status;
+  const chAv = document.getElementById('chAvatar');
+  chAv.innerHTML = photo ? `<img src="${photo}"/>` : name[0]?.toUpperCase()||'?';
 
   // Listen messages
   if(messagesUnsub) messagesUnsub();
@@ -844,60 +868,12 @@ async function openChat(chat) {
   });
 }
 
-function updateChatHeader(chat) {
-  let name='', photo='', status='';
-  if(chat.type==='group') {
-    name = chat.name||'Группа';
-    status = `${chat.members.length} участников`;
-    photo = chat.photoURL || '';
-    document.getElementById('callBtn').style.display = 'none';
-    document.getElementById('videoCallBtn').style.display = 'none';
-    document.getElementById('chAvatar').style.cursor = 'pointer';
-  } else {
-    const otherId = chat.members.find(m=>m!==currentUser.uid);
-    if(otherId) {
-      getDoc(doc(db,'users',otherId)).then(snap => {
-        const ud = snap.data()||{};
-        const newName = ud.name||'Пользователь';
-        const newPhoto = ud.photoURL||'';
-        const newStatus = ud.online ? '● В сети' : 'Не в сети';
-        document.getElementById('chName').textContent = newName;
-        document.getElementById('chStatus').textContent = newStatus;
-        const chAv = document.getElementById('chAvatar');
-        chAv.innerHTML = newPhoto ? `<img src="${newPhoto}"/>` : (newName[0]?.toUpperCase()||'?');
-      });
-    }
-    document.getElementById('callBtn').style.display = '';
-    document.getElementById('videoCallBtn').style.display = '';
-    document.getElementById('chAvatar').style.cursor = 'default';
-    // для синхронного отображения пока используем старые данные
-    const otherIdSync = chat.members.find(m=>m!==currentUser.uid);
-    if(otherIdSync) {
-      getDoc(doc(db,'users',otherIdSync)).then(snap => {
-        const ud = snap.data()||{};
-        const newName = ud.name||'Пользователь';
-        const newPhoto = ud.photoURL||'';
-        const newStatus = ud.online ? '● В сети' : 'Не в сети';
-        document.getElementById('chName').textContent = newName;
-        document.getElementById('chStatus').textContent = newStatus;
-        const chAv = document.getElementById('chAvatar');
-        chAv.innerHTML = newPhoto ? `<img src="${newPhoto}"/>` : (newName[0]?.toUpperCase()||'?');
-      });
-    }
-    return;
-  }
-
-  document.getElementById('chName').textContent = name;
-  document.getElementById('chStatus').textContent = status;
-  const chAv = document.getElementById('chAvatar');
-  chAv.innerHTML = photo ? `<img src="${photo}"/>` : (name[0]?.toUpperCase()||'?');
-}
-
 // ───── MESSAGES ─────
 async function renderMessages(msgs) {
   const area = document.getElementById('messagesArea');
   area.innerHTML = '';
 
+  // Cache user data
   const userCache = {};
   for(const msg of msgs) {
     if(msg.sender && !userCache[msg.sender]) {
@@ -981,7 +957,46 @@ window.autoResize = (el) => {
   el.style.height = Math.min(el.scrollHeight, 120)+'px';
 };
 
-// ───── FILE UPLOAD ─────
+const MAX_DOC_LEN = 900000; // ~900KB base64 string, staying safely under Firestore's 1MB doc limit
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > h) { if(w > maxDim) { h = Math.round(h*maxDim/w); w = maxDim; } }
+        else { if(h > maxDim) { w = Math.round(w*maxDim/h); h = maxDim; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function checkSize(dataUrl, label) {
+  if(dataUrl.length > MAX_DOC_LEN) {
+    const approxKb = Math.round(dataUrl.length * 0.75 / 1024);
+    throw new Error(`${label} слишком большой (~${approxKb} КБ). Без подключения платного облачного хранилища лимит — около ${Math.round(MAX_DOC_LEN*0.7/1024)} КБ.`);
+  }
+}
+
 window.triggerFile = (type) => {
   closeAttach();
   if(type==='image') document.getElementById('fileImage').click();
@@ -993,20 +1008,38 @@ window.uploadFile = async (input, type) => {
   if(!input.files[0] || !currentChatId) return;
   const file = input.files[0];
   try {
-    const r = ref(storage, `chats/${currentChatId}/${Date.now()}_${file.name}`);
-    await uploadBytes(r, file);
-    const url = await getDownloadURL(r);
-    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url};
-    if(type==='image') { msgData.type='image'; }
-    else if(type==='video') { msgData.type='video'; }
-    else { msgData.type='file'; msgData.fileName=file.name; }
+    let dataUrl;
+    if(type==='image') {
+      let quality = 0.75, maxDim = 1280, attempts = 0;
+      dataUrl = await compressImage(file, maxDim, quality);
+      while(dataUrl.length > MAX_DOC_LEN && attempts < 4) {
+        quality = Math.max(quality - 0.15, 0.25);
+        maxDim = Math.max(maxDim - 250, 400);
+        dataUrl = await compressImage(file, maxDim, quality);
+        attempts++;
+      }
+      if(dataUrl.length > MAX_DOC_LEN) {
+        alert('Фото слишком большое даже после сжатия. Выбери другое изображение.');
+        input.value = ''; return;
+      }
+    } else {
+      dataUrl = await blobToBase64(file);
+      if(dataUrl.length > MAX_DOC_LEN) {
+        alert(`Файл слишком большой (лимит ~${Math.round(MAX_DOC_LEN*0.7/1024)} КБ без подключения платного облачного хранилища). Выбери файл меньшего размера.`);
+        input.value = ''; return;
+      }
+    }
+    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url:dataUrl};
+    if(type==='image') msgData.type = 'image';
+    else if(type==='video') msgData.type = 'video';
+    else { msgData.type = 'file'; msgData.fileName = file.name; }
     await addDoc(collection(db,'chats',currentChatId,'messages'), msgData);
     await updateDoc(doc(db,'chats',currentChatId), {
       lastMsg:`[${type==='image'?'Фото':type==='video'?'Видео':'Файл'}]`, lastTime:serverTimestamp()
     });
   } catch(e) {
-    console.error('Upload file error:', e);
-    alert('Не удалось загрузить файл: ' + (e.code || e.message) + '\nПроверь, что Firebase Storage включён и проект на плане Blaze.');
+    console.error(e);
+    alert('Не удалось отправить файл: ' + (e.message||e));
   }
   input.value = '';
 };
@@ -1024,16 +1057,18 @@ window.toggleRecord = async () => {
         stream.getTracks().forEach(t=>t.stop());
         if(!currentChatId) return;
         try {
-          const r = ref(storage, `chats/${currentChatId}/voice_${Date.now()}.webm`);
-          await uploadBytes(r, blob);
-          const url = await getDownloadURL(r);
+          const dataUrl = await blobToBase64(blob);
+          if(dataUrl.length > MAX_DOC_LEN) {
+            alert('Голосовое сообщение слишком длинное (лимит ~' + Math.round(MAX_DOC_LEN*0.7/1024) + ' КБ). Запиши покороче.');
+            return;
+          }
           await addDoc(collection(db,'chats',currentChatId,'messages'), {
-            type:'voice', url, sender:currentUser.uid, time:serverTimestamp()
+            type:'voice', url:dataUrl, sender:currentUser.uid, time:serverTimestamp()
           });
           await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'Голосовое сообщение', lastTime:serverTimestamp()});
         } catch(e) {
-          console.error('Upload voice error:', e);
-          alert('Не удалось загрузить голосовое: ' + (e.code || e.message) + '\nПроверь, что Firebase Storage включён и проект на плане Blaze.');
+          console.error(e);
+          alert('Не удалось отправить голосовое: ' + (e.message||e));
         }
       };
       mediaRecorder.start();
@@ -1049,32 +1084,8 @@ window.toggleRecord = async () => {
   }
 };
 
-// ───── NEW CHAT ─────
-window.openNewChat = () => {
-  document.getElementById('userSearch').value = '';
-  document.getElementById('userResults').innerHTML = '';
-  openModal('newChatModal');
-};
-
-window.searchUsers = async (val) => {
-  if(val.length < 2) { document.getElementById('userResults').innerHTML=''; return; }
-  const snap = await getDocs(collection(db,'users'));
-  const results = document.getElementById('userResults');
-  results.innerHTML = '';
-  snap.forEach(d => {
-    const u = d.data();
-    if(u.uid===currentUser.uid) return;
-    if(!u.name?.toLowerCase().includes(val.toLowerCase()) && !u.email?.toLowerCase().includes(val.toLowerCase())) return;
-    const el = document.createElement('div');
-    el.className = 'user-result';
-    el.innerHTML = `<div class="ur-avatar">${u.photoURL?`<img src="${u.photoURL}"/>`:(u.name||'?')[0].toUpperCase()}</div>
-      <div><div class="ur-name">${u.name||'?'}</div><div class="ur-email">${u.email||''}</div></div>`;
-    el.onclick = () => startDirectChat(u);
-    results.appendChild(el);
-  });
-};
-
 async function startDirectChat(user) {
+  // Check if chat exists
   const q = query(collection(db,'chats'),
     where('type','==','direct'),
     where('members','array-contains',currentUser.uid)
@@ -1086,8 +1097,11 @@ async function startDirectChat(user) {
     if(data.members.includes(user.uid)) existingChat = {id:d.id,...data};
   });
 
+  document.getElementById('mainSearchInput').value = '';
+  document.querySelectorAll('.search-suggestion').forEach(el => el.remove());
+  document.querySelectorAll('.chat-item').forEach(el => el.style.display = '');
+
   if(existingChat) {
-    closeModal('newChatModal');
     openChat(existingChat);
     return;
   }
@@ -1098,31 +1112,17 @@ async function startDirectChat(user) {
     lastMsg:'',
     lastTime:serverTimestamp()
   });
-  closeModal('newChatModal');
   openChat({id:chatRef.id, type:'direct', members:[currentUser.uid,user.uid]});
 }
 
 // ───── GROUPS ─────
 window.openNewGroup = () => {
   selectedGroupMembers = [];
-  groupAvatarFile = null;
   document.getElementById('groupName').value = '';
   document.getElementById('groupSearch').value = '';
   document.getElementById('groupUserResults').innerHTML = '';
   document.getElementById('selectedMembers').innerHTML = '';
-  document.getElementById('groupAvatarPreview').innerHTML = 'G';
-  document.getElementById('groupAvatarInput').value = '';
   openModal('newGroupModal');
-};
-
-window.previewGroupAvatar = (input) => {
-  if(!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('groupAvatarPreview').innerHTML = `<img src="${e.target.result}"/>`;
-    groupAvatarFile = input.files[0];
-  };
-  reader.readAsDataURL(input.files[0]);
 };
 
 window.searchGroupUsers = async (val) => {
@@ -1163,63 +1163,15 @@ window.removeGroupMember = (uid, el) => {
 
 window.createGroup = async () => {
   const name = document.getElementById('groupName').value.trim();
-  if(!name) { alert('Введите название группы'); return; }
-  if(selectedGroupMembers.length === 0) { alert('Добавьте участников'); return; }
+  if(!name) return;
+  if(selectedGroupMembers.length === 0) { alert('Добавь участников'); return; }
   const members = [currentUser.uid, ...selectedGroupMembers.map(m=>m.uid)];
-
-  let photoURL = '';
-  if(groupAvatarFile) {
-    try {
-      const r = ref(storage, `group_avatars/${Date.now()}_${groupAvatarFile.name}`);
-      await uploadBytes(r, groupAvatarFile);
-      photoURL = await getDownloadURL(r);
-    } catch(e) {
-      console.error('Group avatar upload error:', e);
-      alert('Не удалось загрузить аватар группы: ' + (e.code || e.message));
-      return;
-    }
-  }
-
   const chatRef = await addDoc(collection(db,'chats'), {
     type:'group', name, members, lastMsg:'', lastTime:serverTimestamp(),
-    createdBy:currentUser.uid,
-    photoURL: photoURL
+    createdBy:currentUser.uid
   });
   closeModal('newGroupModal');
-  openChat({id:chatRef.id, type:'group', name, members, photoURL});
-};
-
-// ───── GROUP AVATAR UPDATE ─────
-window.onAvatarClick = () => {
-  if(currentChatType === 'group' && currentChatData) {
-    // открыть модалку для смены аватарки группы
-    const preview = document.getElementById('groupAvatarModalPreview');
-    if(currentChatData.photoURL) {
-      preview.innerHTML = `<img src="${currentChatData.photoURL}"/>`;
-    } else {
-      preview.textContent = (currentChatData.name||'G')[0].toUpperCase();
-    }
-    openModal('groupAvatarModal');
-  }
-};
-
-window.uploadGroupAvatar = async (input) => {
-  if(!input.files[0] || !currentChatId) return;
-  const file = input.files[0];
-  try {
-    const r = ref(storage, `group_avatars/${currentChatId}_${Date.now()}`);
-    await uploadBytes(r, file);
-    const url = await getDownloadURL(r);
-    await updateDoc(doc(db,'chats',currentChatId), {photoURL: url});
-    // обновить текущие данные
-    currentChatData.photoURL = url;
-    updateChatHeader(currentChatData);
-    // обновить список чатов (перерисовка произойдёт сама)
-    closeModal('groupAvatarModal');
-  } catch(e) {
-    console.error('Group avatar update error:', e);
-    alert('Не удалось обновить аватар: ' + (e.code || e.message));
-  }
+  openChat({id:chatRef.id, type:'group', name, members});
 };
 
 // ───── CALLS (WebRTC) ─────
@@ -1231,6 +1183,7 @@ let callDocUnsub = null;
 let globalCallListenerUnsub = null;
 let ringtoneTimeout = null;
 
+// Listen globally for incoming calls addressed to me
 function listenIncomingCalls() {
   const q = query(collection(db,'calls'), where('calleeId','==',currentUser.uid));
   globalCallListenerUnsub = onSnapshot(q, snap => {
@@ -1258,6 +1211,7 @@ async function showIncomingCall(chatId, data) {
   document.getElementById('incomingSub').textContent = data.callType==='video' ? 'Входящий видеозвонок...' : 'Входящий звонок...';
   document.getElementById('incomingCallScreen').classList.add('active');
 
+  // Auto-hide if caller cancels
   callDocUnsub = onSnapshot(doc(db,'calls',chatId), s => {
     const d = s.data();
     if(!d || d.status==='ended' || d.status==='cancelled') {
@@ -1318,6 +1272,7 @@ window.answerCall = async () => {
   await peerConnection.setLocalDescription(answer);
   await updateDoc(doc(db,'calls',chatId), {answer:{type:answer.type,sdp:answer.sdp}, status:'accepted'});
 
+  // Listen for caller's ICE candidates
   candidatesUnsub = onSnapshot(collection(db,'calls',chatId,'callerCandidates'), snap => {
     snap.docChanges().forEach(c => {
       if(c.type==='added' && peerConnection) peerConnection.addIceCandidate(new RTCIceCandidate(c.doc.data()));
@@ -1382,6 +1337,7 @@ window.startCall = async (type) => {
     status:'ringing'
   });
 
+  // Listen for answer
   callDocUnsub = onSnapshot(doc(db,'calls',chatId), async snap => {
     const data = snap.data();
     if(!data) return;
