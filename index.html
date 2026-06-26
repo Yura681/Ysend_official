@@ -394,6 +394,7 @@ input[type=file]{display:none}
       <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
     </div>
     <div id="verifyForm" style="display:none">
+      <button class="modal-close" id="verifyBackBtn" onclick="backToAuthScreen()" title="Назад" style="float:none;margin:-4px 0 8px -4px">←</button>
       <div class="auth-sub" style="margin-bottom:18px">Мы отправили код подтверждения на <b id="verifyEmailLabel"></b>. Введи его, чтобы продолжить.</div>
       <div class="field"><label>Код из письма</label><input type="text" id="verifyCodeInput" maxlength="6" placeholder="000000"/></div>
       <button class="btn-primary" onclick="confirmRegisterCode()">Подтвердить</button>
@@ -735,6 +736,17 @@ async function startEmailVerificationFlow(email) {
   document.getElementById('verifyCodeInput').value = '';
   await resendRegisterCode();
 }
+
+window.backToAuthScreen = async () => {
+  pendingEmailCode = null;
+  document.getElementById('verifyForm').style.display = 'none';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  document.getElementById('authErr').textContent = '';
+  switchTab('login');
+  if(currentUser) {
+    try { await signOut(auth); } catch(e) {}
+  }
+};
 
 window.resendRegisterCode = async () => {
   if(!currentUser) return;
