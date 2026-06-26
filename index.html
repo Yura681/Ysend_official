@@ -393,6 +393,12 @@ input[type=file]{display:none}
       <div class="field"><label>Пароль</label><input type="password" id="regPass" placeholder="Минимум 6 символов"/></div>
       <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
     </div>
+    <div id="verifyForm" style="display:none">
+      <div class="auth-sub" style="margin-bottom:18px">Мы отправили код подтверждения на <b id="verifyEmailLabel"></b>. Введи его, чтобы продолжить.</div>
+      <div class="field"><label>Код из письма</label><input type="text" id="verifyCodeInput" maxlength="6" placeholder="000000"/></div>
+      <button class="btn-primary" onclick="confirmRegisterCode()">Подтвердить</button>
+      <button class="btn-primary" style="background:var(--surface2);color:var(--text2);margin-top:8px" onclick="resendRegisterCode()">Отправить код ещё раз</button>
+    </div>
     <div class="auth-err" id="authErr"></div>
   </div>
 </div>
@@ -528,6 +534,11 @@ input[type=file]{display:none}
         <button class="btn-primary" style="width:auto;padding:11px 16px" onclick="confirmEmailCode()">ОК</button>
       </div>
     </div>
+    <div class="divider" style="margin-top:18px"></div>
+    <div style="text-align:left">
+      <div class="section-label" style="padding-left:0">Цвет темы чатов</div>
+      <div id="themeColorRow" style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap"></div>
+    </div>
   </div>
 </div>
 
@@ -597,6 +608,9 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- EmailJS SDK (official) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -643,32 +657,34 @@ let notificationsEnabled = (localStorage.getItem('notificationsEnabled') !== 'fa
 let pendingEmailCode = null;  // {code, expires}
 
 // ───── EMAILJS CONFIG ─────
-// Sending real e-mails from pure client-side code requires a 3rd-party relay
-// (browsers can't open an SMTP connection). EmailJS is a free service made for
-// exactly this. Create a free account at https://www.emailjs.com, create an
-// email service + a template with vars {{to_email}} and {{code}}, then paste
-// your IDs below. Until you do, the code will be shown in an alert() as a
-// fallback so the feature still works for testing.
+// Сайт не может сам отправлять письма (в браузере нет SMTP) — поэтому письма
+// идут через бесплатный сервис EmailJS. Как настроить — см. инструкцию,
+// которую прислал ассистент. Вставь свои значения сюда:
 const EMAILJS_SERVICE_ID = 'service_6zk038s';
 const EMAILJS_TEMPLATE_ID = 'template_vzliejd';
 const EMAILJS_PUBLIC_KEY = 'GOnXkEqAT8gWddYfP';
 
+if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+  window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
 async function sendVerificationEmail(toEmail, code) {
-  if(EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID') {
-    // Not configured yet — fallback so the flow is still testable.
-    alert('Email-сервис не настроен (см. EMAILJS_SERVICE_ID в коде). Код для теста: ' + code);
+  if(EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID' || !window.emailjs) {
+    // Не настроено / SDK не загрузился — fallback, чтобы фичу можно было тестировать
+    alert('Email-сервис не настроен. Код для теста: ' + code);
     return;
   }
-  await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      service_id: EMAILJS_SERVICE_ID,
-      template_id: EMAILJS_TEMPLATE_ID,
-      user_id: EMAILJS_PUBLIC_KEY,
-      template_params: { to_email: toEmail, code }
-    })
-  });
+  try {
+    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: toEmail, code
+    });
+  } catch(err) {
+    console.error('EmailJS error:', err);
+    // Частая причина: сайт открыт как file:// — в EmailJS нужно включить
+    // Account → Security → "Allow EmailJS API for non-browser applications",
+    // иначе запросы с file:// origin блокируются.
+    throw new Error('Письмо не отправлено (' + (err?.text||err?.message||'см. консоль') + '). Если сайт открыт как file://, включи в EmailJS: Account → Security → Allow EmailJS API for non-browser applications.');
+  }
 }
 
 // ───── AUTH ─────
@@ -701,29 +717,82 @@ window.doRegister = async () => {
       uid: cred.user.uid, name, email, photoURL:'', createdAt: serverTimestamp(),
       emailVerifiedCustom:false, blockedUsers:[]
     });
+    // Сразу шлём код и показываем экран подтверждения — войти в приложение
+    // можно только после ввода правильного кода.
+    await startEmailVerificationFlow(email);
   } catch(e) {
     document.getElementById('authErr').textContent = e.message.includes('email') ? 'Email уже занят' : 'Пароль минимум 6 символов';
   }
 };
 
+async function startEmailVerificationFlow(email) {
+  document.getElementById('authErr').textContent = '';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'none';
+  document.querySelector('.auth-tabs').style.display = 'none';
+  document.getElementById('verifyForm').style.display = 'block';
+  document.getElementById('verifyEmailLabel').textContent = email;
+  document.getElementById('verifyCodeInput').value = '';
+  await resendRegisterCode();
+}
+
+window.resendRegisterCode = async () => {
+  if(!currentUser) return;
+  const email = currentUser.email;
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  pendingEmailCode = {code, expires: Date.now() + 10*60*1000};
+  try {
+    await sendVerificationEmail(email, code);
+  } catch(e) {
+    document.getElementById('authErr').textContent = e.message||'Не удалось отправить код';
+  }
+};
+
+window.confirmRegisterCode = async () => {
+  const input = document.getElementById('verifyCodeInput').value.trim();
+  if(!pendingEmailCode) { document.getElementById('authErr').textContent = 'Сначала запроси код'; return; }
+  if(Date.now() > pendingEmailCode.expires) { document.getElementById('authErr').textContent = 'Код устарел, запроси новый'; return; }
+  if(input !== pendingEmailCode.code) { document.getElementById('authErr').textContent = 'Неверный код'; return; }
+  await updateDoc(doc(db,'users',currentUser.uid), {emailVerifiedCustom:true});
+  pendingEmailCode = null;
+  document.getElementById('authErr').textContent = '';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  document.getElementById('verifyForm').style.display = 'none';
+  enterApp();
+}
+
 window.doLogout = async () => {
   if(chatsUnsub) chatsUnsub();
   if(messagesUnsub) messagesUnsub();
   if(globalCallListenerUnsub) globalCallListenerUnsub();
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  document.getElementById('verifyForm').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
   await signOut(auth);
 };
+
+async function enterApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  await setDoc(doc(db,'users',currentUser.uid), {online:true}, {merge:true});
+  loadMyProfile();
+  listenChats();
+  listenIncomingCalls();
+  initNotifications();
+  loadThemeColor();
+}
 
 onAuthStateChanged(auth, async (user) => {
   if(user) {
     currentUser = user;
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('app').classList.add('visible');
-    // Update online status
-    await setDoc(doc(db,'users',user.uid), {online:true}, {merge:true});
-    loadMyProfile();
-    listenChats();
-    listenIncomingCalls();
-    initNotifications();
+    const snap = await getDoc(doc(db,'users',user.uid));
+    const data = snap.data()||{};
+    if(!data.emailVerifiedCustom) {
+      // Почта ещё не подтверждена — показываем экран с кодом и не пускаем в приложение
+      await startEmailVerificationFlow(user.email);
+      return;
+    }
+    await enterApp();
   } else {
     currentUser = null;
     document.getElementById('authScreen').style.display = 'flex';
@@ -735,15 +804,19 @@ onAuthStateChanged(auth, async (user) => {
 function updateNotifBtnUI() {
   const btn = document.getElementById('notifBtn');
   if(!btn) return;
-  btn.style.color = notificationsEnabled ? 'var(--accent2)' : 'var(--text3)';
-  btn.title = notificationsEnabled ? 'Уведомления включены (нажми, чтобы отключить)' : 'Уведомления отключены (нажми, чтобы включить)';
+  const granted = ('Notification' in window) && Notification.permission==='granted';
+  const active = notificationsEnabled && granted;
+  btn.style.color = active ? 'var(--accent2)' : 'var(--text3)';
+  if(!('Notification' in window)) btn.title = 'Браузер не поддерживает уведомления';
+  else if(Notification.permission==='denied') btn.title = 'Уведомления заблокированы в браузере — разреши их в настройках сайта';
+  else btn.title = active ? 'Уведомления включены (нажми, чтобы отключить)' : 'Уведомления отключены (нажми, чтобы включить)';
 }
 
 async function initNotifications() {
   updateNotifBtnUI();
-  if(notificationsEnabled && 'Notification' in window && Notification.permission==='default') {
-    try { await Notification.requestPermission(); } catch(e) {}
-  }
+  // Не запрашиваем разрешение автоматически — современные браузеры блокируют
+  // показ системного диалога без явного клика пользователя. Разрешение
+  // запрашивается только в toggleNotifications() по нажатию на колокольчик.
 }
 
 window.toggleNotifications = async () => {
@@ -802,6 +875,7 @@ window.openProfile = async () => {
     verifyBtn.style.display = '';
     verifyBtn.textContent = 'Подтвердить';
   }
+  renderThemeColorPicker();
   openModal('profileModal');
 };
 
@@ -1288,11 +1362,60 @@ window.uploadFile = async (input, type) => {
   input.value = '';
 };
 
-// ───── VOICE MESSAGES ─────
+// ───── THEME COLOR ─────
+const THEME_PRESETS = {
+  violet:  {accent:'#7c6af7', accent2:'#a78bfa', msgOut:'#2d2460'},
+  blue:    {accent:'#3b82f6', accent2:'#60a5fa', msgOut:'#1e3a5f'},
+  green:   {accent:'#10b981', accent2:'#34d399', msgOut:'#0f3d2e'},
+  pink:    {accent:'#ec4899', accent2:'#f472b6', msgOut:'#4a1942'},
+  orange:  {accent:'#f97316', accent2:'#fb923c', msgOut:'#4a2c10'},
+  red:     {accent:'#ef4444', accent2:'#f87171', msgOut:'#4a1414'},
+};
+
+function applyThemeColor(key) {
+  const t = THEME_PRESETS[key] || THEME_PRESETS.violet;
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent2', t.accent2);
+  document.documentElement.style.setProperty('--msg-out', t.msgOut);
+}
+
+async function loadThemeColor() {
+  let key = localStorage.getItem('themeColor');
+  try {
+    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    const data = snap.data()||{};
+    if(data.themeColor) key = data.themeColor;
+  } catch(e) {}
+  applyThemeColor(key || 'violet');
+}
+
+window.setThemeColor = async (key) => {
+  applyThemeColor(key);
+  localStorage.setItem('themeColor', key);
+  renderThemeColorPicker(key);
+  if(currentUser) {
+    try { await updateDoc(doc(db,'users',currentUser.uid), {themeColor:key}); } catch(e) {}
+  }
+};
+
+function renderThemeColorPicker(activeKey) {
+  const row = document.getElementById('themeColorRow');
+  if(!row) return;
+  row.innerHTML = '';
+  Object.entries(THEME_PRESETS).forEach(([key, t]) => {
+    const sw = document.createElement('div');
+    const isActive = key === (activeKey || localStorage.getItem('themeColor') || 'violet');
+    sw.style.cssText = `width:32px;height:32px;border-radius:50%;background:${t.accent};cursor:pointer;border:3px solid ${isActive?'#fff':'transparent'};box-shadow:0 0 0 1px var(--border)`;
+    sw.title = key;
+    sw.onclick = () => setThemeColor(key);
+    row.appendChild(sw);
+  });
+}
+const AUDIO_CONSTRAINTS = {echoCancellation:true, noiseSuppression:true, autoGainControl:true};
 window.toggleRecord = async () => {
   if(!isRecording) {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const stream = await navigator.mediaDevices.getUserMedia({audio:AUDIO_CONSTRAINTS});
       mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
@@ -1605,7 +1728,7 @@ window.answerCall = async () => {
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia(
-      callType==='video' ? {video:true,audio:true} : {audio:true}
+      callType==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
     if(callType==='video') document.getElementById('localVideo').srcObject = localStream;
   } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
@@ -1664,7 +1787,7 @@ window.startCall = async (type) => {
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia(
-      type==='video' ? {video:true,audio:true} : {audio:true}
+      type==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
     if(type==='video') document.getElementById('localVideo').srcObject = localStream;
   } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
