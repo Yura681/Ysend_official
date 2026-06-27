@@ -749,7 +749,7 @@ async function sendVerificationEmail(toEmail, code) {
   try {
     const res = await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_email: toEmail,   // должно совпадать с переменной в поле "To Email" шаблона
-      email: toEmail,      // дубль на случай, если в шаблоне переменная названа просто {{email}}
+      email: toEmail,      // дубль на случай, если в шаблоне переменная названа просто "email" без to_
       to_name: toEmail,
       code, message: code, passcode: code // дубли на случай других имён переменной в шаблоне
     });
@@ -759,7 +759,7 @@ async function sendVerificationEmail(toEmail, code) {
     // Частые причины:
     // 1) Сайт открыт как file:// — нужно включить в EmailJS:
     //    Account → Security → "Allow EmailJS API for non-browser applications"
-    // 2) В шаблоне письма поле "To Email" не привязано к {{to_email}}, а
+    // 2) В шаблоне письма поле "To Email" не привязано к переменной to_email, а
     //    содержит твою собственную почту — тогда письмо реально уходит,
     //    но не туда, куда нужно.
     // 3) Email-сервис (Gmail) отключился — Email Services → проверить статус "Connected".
@@ -2201,4 +2201,4 @@ function escapeHtml(str) {
 
 </script>
 </body>
-</html>  
+</html>
