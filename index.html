@@ -415,7 +415,7 @@ input[type=file]{display:none}
         <button class="icon-btn" id="notifBtn" onclick="toggleNotifications()" title="Уведомления">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
-        <button class="icon-btn" onclick="openNewGroup()" title="Новая группа">
+        <button class="icon-btn" onclick="openNewChatChooser()" title="Создать группу или бота">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
         <button class="icon-btn" onclick="doLogout()" title="Выйти">
@@ -494,6 +494,36 @@ input[type=file]{display:none}
 <input type="file" id="fileVideo" accept="video/*" onchange="uploadFile(this,'video')"/>
 <input type="file" id="fileAny" onchange="uploadFile(this,'file')"/>
 
+<!-- NEW CHAT CHOOSER MODAL -->
+<div class="modal-bg" id="newChatChooserModal">
+  <div class="modal" style="text-align:center">
+    <button class="modal-close" onclick="closeModal('newChatChooserModal')">✕</button>
+    <h2>Что создать?</h2>
+    <button class="btn-primary" style="margin-top:10px" onclick="closeModal('newChatChooserModal'); openNewGroup()">👥 Группа</button>
+    <button class="btn-primary" style="margin-top:10px;background:var(--surface2);color:var(--text)" onclick="closeModal('newChatChooserModal'); openNewBot()">🤖 Бот</button>
+  </div>
+</div>
+
+<!-- NEW BOT MODAL -->
+<div class="modal-bg" id="newBotModal">
+  <div class="modal" style="text-align:center">
+    <button class="modal-close" onclick="closeModal('newBotModal')">✕</button>
+    <h2>Создать бота</h2>
+    <div class="profile-avatar-wrap" id="botAvatarWrap" onclick="document.getElementById('botAvatarInput').click()">🤖</div>
+    <input type="file" id="botAvatarInput" accept="image/*" onchange="previewBotAvatar(this)"/>
+    <div class="field" style="text-align:left">
+      <label>Имя бота</label>
+      <input type="text" id="botName" placeholder="Например: Помощник" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+    </div>
+    <div class="field" style="text-align:left">
+      <label>Логика бота (JavaScript)</label>
+      <textarea id="botScript" rows="8" placeholder="// переменная message — текст от пользователя&#10;// верни строку — это будет ответ бота&#10;if(message.toLowerCase().includes('привет')) return 'Привет! Как дела?';&#10;return 'Эхо: ' + message;" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none;resize:vertical"></textarea>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px;text-align:left">Пиши обычный JS. Доступна переменная <code>message</code> (текст пользователя). Верни строку — бот её отправит. Можно async/await и fetch к открытым API.</div>
+    </div>
+    <button class="btn-primary" onclick="createBot()">Создать бота</button>
+  </div>
+</div>
+
 <!-- NEW GROUP MODAL -->
 <div class="modal-bg" id="newGroupModal">
   <div class="modal">
@@ -508,6 +538,25 @@ input[type=file]{display:none}
     <div id="groupUserResults"></div>
     <div id="selectedMembers" style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0"></div>
     <button class="btn-primary" onclick="createGroup()">Создать группу</button>
+  </div>
+</div>
+
+<!-- EDIT BOT MODAL -->
+<div class="modal-bg" id="editBotModal">
+  <div class="modal" style="text-align:center">
+    <button class="modal-close" onclick="closeModal('editBotModal')">✕</button>
+    <h2>Бот</h2>
+    <div class="profile-avatar-wrap" id="editBotAvatarWrap" onclick="document.getElementById('editBotAvatarInput').click()">🤖</div>
+    <input type="file" id="editBotAvatarInput" accept="image/*" onchange="uploadEditBotAvatar(this)"/>
+    <div class="field" style="text-align:left">
+      <label>Имя бота</label>
+      <input type="text" id="editBotName" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+    </div>
+    <div class="field" style="text-align:left">
+      <label>Логика бота (JavaScript)</label>
+      <textarea id="editBotScript" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none;resize:vertical"></textarea>
+    </div>
+    <button class="btn-primary" onclick="saveEditBot()">Сохранить</button>
   </div>
 </div>
 
@@ -616,10 +665,10 @@ input[type=file]{display:none}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, updateProfile }
+  signOut, onAuthStateChanged, updateProfile, deleteUser }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
-  onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion }
+  onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -744,7 +793,25 @@ window.backToAuthScreen = async () => {
   document.getElementById('authErr').textContent = '';
   switchTab('login');
   if(currentUser) {
-    try { await signOut(auth); } catch(e) {}
+    const uid = currentUser.uid;
+    try {
+      // Аккаунт ещё не подтверждён почтой — удаляем его, чтобы email
+      // снова стал свободным для повторной регистрации (иначе Firebase
+      // будет говорить "email уже занят", хотя письмо так и не пришло).
+      const snap = await getDoc(doc(db,'users',uid));
+      const data = snap.data()||{};
+      if(!data.emailVerifiedCustom) {
+        await deleteDoc(doc(db,'users',uid)).catch(()=>{});
+        await deleteUser(currentUser).catch(async () => {
+          // deleteUser can fail if Firebase requires a recent login — signOut as fallback
+          await signOut(auth).catch(()=>{});
+        });
+      } else {
+        await signOut(auth).catch(()=>{});
+      }
+    } catch(e) {
+      await signOut(auth).catch(()=>{});
+    }
   }
 };
 
@@ -981,6 +1048,10 @@ async function notifyAboutChat(chatId, data) {
   if(data.type==='group') {
     title = data.name || 'Группа';
     icon = data.photoURL || '';
+  } else if(data.type==='bot') {
+    if(myBlockedUsers.includes('bot:'+chatId)) return; // blocked bot — no notifications
+    title = data.name || 'Бот';
+    icon = data.photoURL || '';
   } else {
     const otherId = data.members.find(m=>m!==currentUser.uid);
     if(!otherId) return;
@@ -1002,6 +1073,10 @@ async function renderChatList(chats) {
     let name = '', photo = '', isOnline = false, otherId = null;
     if(chat.type==='group') {
       name = chat.name || 'Группа';
+      photo = chat.photoURL || '';
+    } else if(chat.type==='bot') {
+      name = chat.name || 'Бот';
+      photo = chat.photoURL || '';
     } else {
       otherId = chat.members.find(m=>m!==currentUser.uid);
       if(otherId) {
@@ -1032,7 +1107,7 @@ async function renderChatList(chats) {
         ${isOnline?'<div class="ci-online"></div>':''}
       </div>
       <div class="ci-info">
-        <div class="ci-name">${name} ${chat.type==='group'?'<span class="group-badge">GROUP</span>':''}</div>
+        <div class="ci-name">${name} ${chat.type==='group'?'<span class="group-badge">GROUP</span>':chat.type==='bot'?'<span class="group-badge">BOT</span>':''}</div>
         <div class="ci-last">${chat.lastMsg||''}</div>
       </div>
       <div class="ci-meta">
@@ -1120,6 +1195,12 @@ async function openChat(chat) {
     status = `${chat.members.length} участников`;
     document.getElementById('callBtn').style.display = 'none';
     document.getElementById('videoCallBtn').style.display = 'none';
+  } else if(chat.type==='bot') {
+    name = chat.name||'Бот';
+    photo = chat.photoURL||'';
+    status = 'Бот';
+    document.getElementById('callBtn').style.display = 'none';
+    document.getElementById('videoCallBtn').style.display = 'none';
   } else {
     const otherId = chat.members.find(m=>m!==currentUser.uid);
     if(otherId) {
@@ -1161,6 +1242,28 @@ function renderChatHeaderActions(chat) {
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
     btn.onclick = () => openGroupSettings(chat.id);
     wrap.appendChild(btn);
+  } else if(chat.type==='bot') {
+    const botKey = 'bot:'+chat.id;
+    const isBlocked = myBlockedUsers.includes(botKey);
+    const btn = document.createElement('button');
+    btn.className = 'icon-btn';
+    btn.style.width = 'auto';
+    btn.style.padding = '0 10px';
+    btn.style.fontSize = '12px';
+    btn.style.fontWeight = '700';
+    btn.style.color = isBlocked ? 'var(--green)' : 'var(--red)';
+    btn.textContent = isBlocked ? 'Разблокировать' : 'Заблокировать';
+    btn.onclick = () => toggleBlockUser(botKey);
+    wrap.appendChild(btn);
+
+    if(chat.createdBy === currentUser.uid) {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'icon-btn';
+      editBtn.title = 'Изменить бота';
+      editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>';
+      editBtn.onclick = () => openEditBot(chat.id);
+      wrap.appendChild(editBtn);
+    }
   } else {
     const otherId = chat.members.find(m=>m!==currentUser.uid);
     const isBlocked = myBlockedUsers.includes(otherId);
@@ -1195,13 +1298,16 @@ async function renderMessages(msgs) {
   const seen = new Set();
   msgs = msgs.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
 
-  // Hide messages from people I've blocked
-  msgs = msgs.filter(m => !myBlockedUsers.includes(m.sender));
+  // Hide messages from people I've blocked (and from a blocked bot in this chat)
+  const botBlockedHere = myBlockedUsers.includes('bot:'+(currentChatId||''));
+  msgs = msgs.filter(m => !myBlockedUsers.includes(m.sender) && !(botBlockedHere && m.sender==='__bot__'));
 
-  // Cache user data
+  // Cache user data (bot messages use the chat's own name/avatar instead of a real user doc)
   const userCache = {};
   for(const msg of msgs) {
-    if(msg.sender && !userCache[msg.sender]) {
+    if(msg.sender === '__bot__') {
+      userCache[msg.sender] = {name: currentChatData?.name||'Бот', photoURL: currentChatData?.photoURL||''};
+    } else if(msg.sender && !userCache[msg.sender]) {
       const snap = await getDoc(doc(db,'users',msg.sender));
       userCache[msg.sender] = snap.data()||{};
     }
@@ -1266,17 +1372,44 @@ window.sendMessage = async () => {
   isSending = true;
   input.value = '';
   input.style.height = '';
+  const chatId = currentChatId;
+  const chatData = currentChatData;
   try {
-    await addDoc(collection(db,'chats',currentChatId,'messages'), {
+    await addDoc(collection(db,'chats',chatId,'messages'), {
       type:'text', text, sender:currentUser.uid, time:serverTimestamp()
     });
-    await updateDoc(doc(db,'chats',currentChatId), {
+    await updateDoc(doc(db,'chats',chatId), {
       lastMsg: text.slice(0,50), lastTime:serverTimestamp(), lastSender:currentUser.uid
     });
+    if(chatData && chatData.type==='bot') {
+      await runBotReply(chatId, chatData, text);
+    }
   } finally {
     isSending = false;
   }
 };
+
+// Бот не имеет своего firebase-аккаунта — это просто JS-функция, которую
+// задаёт владелец чата. Она выполняется в браузере того, кто пишет боту.
+async function runBotReply(chatId, chatData, userText) {
+  const botKey = 'bot:'+chatId;
+  if(myBlockedUsers.includes(botKey)) return; // бот заблокирован — не отвечает
+  let reply;
+  try {
+    const fn = new Function('message', chatData.botScript || 'return "..."');
+    reply = await fn(userText);
+  } catch(e) {
+    reply = '⚠️ Ошибка в коде бота: ' + e.message;
+  }
+  if(reply === undefined || reply === null) return; // бот может промолчать, если script ничего не вернул
+  reply = String(reply).slice(0, 4000);
+  await addDoc(collection(db,'chats',chatId,'messages'), {
+    type:'text', text: reply, sender:'__bot__', time:serverTimestamp()
+  });
+  await updateDoc(doc(db,'chats',chatId), {
+    lastMsg: reply.slice(0,50), lastTime:serverTimestamp(), lastSender:'__bot__'
+  });
+}
 
 window.handleKey = (e) => {
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
@@ -1502,6 +1635,107 @@ window.openNewGroup = () => {
   document.getElementById('groupUserResults').innerHTML = '';
   document.getElementById('selectedMembers').innerHTML = '';
   openModal('newGroupModal');
+};
+
+window.openNewChatChooser = () => openModal('newChatChooserModal');
+
+// ───── BOTS ─────
+// Бот — это не настоящий аккаунт Firebase (у него нет почты, его не нужно
+// регистрировать). Это обычный чат с типом 'bot', где хранится JS-код,
+// который выполняется в браузере того, кто пишет боту, и генерирует ответ.
+let newBotAvatarData = '';
+
+window.openNewBot = () => {
+  newBotAvatarData = '';
+  document.getElementById('botName').value = '';
+  document.getElementById('botScript').value = '';
+  document.getElementById('botAvatarWrap').innerHTML = '🤖';
+  openModal('newBotModal');
+};
+
+window.previewBotAvatar = async (input) => {
+  if(!input.files[0]) return;
+  try {
+    const dataUrl = await compressImage(input.files[0], 320, 0.8);
+    checkSize(dataUrl, 'Аватар бота');
+    newBotAvatarData = dataUrl;
+    document.getElementById('botAvatarWrap').innerHTML = `<img src="${dataUrl}"/>`;
+  } catch(e) {
+    alert('Не удалось загрузить аватар: ' + e.message);
+  }
+  input.value = '';
+};
+
+window.createBot = async () => {
+  const name = document.getElementById('botName').value.trim();
+  const script = document.getElementById('botScript').value.trim();
+  if(!name) { alert('Введи имя бота'); return; }
+  if(!script) { alert('Напиши хотя бы простую логику для бота'); return; }
+  try {
+    new Function('message', script); // проверяем, что код хотя бы синтаксически валиден
+  } catch(e) {
+    alert('Ошибка в коде бота: ' + e.message);
+    return;
+  }
+  const chatRef = await addDoc(collection(db,'chats'), {
+    type:'bot', name, photoURL:newBotAvatarData||'', botScript:script,
+    members:[currentUser.uid], createdBy:currentUser.uid,
+    lastMsg:'', lastTime:serverTimestamp()
+  });
+  closeModal('newBotModal');
+  openChat({id:chatRef.id, type:'bot', name, photoURL:newBotAvatarData||'', botScript:script, members:[currentUser.uid], createdBy:currentUser.uid});
+};
+
+let editBotChatId = null;
+let editBotAvatarData = '';
+
+window.openEditBot = async (chatId) => {
+  editBotChatId = chatId;
+  editBotAvatarData = '';
+  const snap = await getDoc(doc(db,'chats',chatId));
+  const g = snap.data();
+  if(!g) return;
+  document.getElementById('editBotName').value = g.name||'';
+  document.getElementById('editBotScript').value = g.botScript||'';
+  document.getElementById('editBotAvatarWrap').innerHTML = g.photoURL ? `<img src="${g.photoURL}"/>` : '🤖';
+  openModal('editBotModal');
+};
+
+window.uploadEditBotAvatar = async (input) => {
+  if(!input.files[0]) return;
+  try {
+    const dataUrl = await compressImage(input.files[0], 320, 0.8);
+    checkSize(dataUrl, 'Аватар бота');
+    editBotAvatarData = dataUrl;
+    document.getElementById('editBotAvatarWrap').innerHTML = `<img src="${dataUrl}"/>`;
+  } catch(e) {
+    alert('Не удалось загрузить аватар: ' + e.message);
+  }
+  input.value = '';
+};
+
+window.saveEditBot = async () => {
+  if(!editBotChatId) return;
+  const name = document.getElementById('editBotName').value.trim();
+  const script = document.getElementById('editBotScript').value.trim();
+  if(!name || !script) return;
+  try {
+    new Function('message', script);
+  } catch(e) {
+    alert('Ошибка в коде бота: ' + e.message);
+    return;
+  }
+  const update = {name, botScript:script};
+  if(editBotAvatarData) update.photoURL = editBotAvatarData;
+  await updateDoc(doc(db,'chats',editBotChatId), update);
+  if(currentChatId===editBotChatId) {
+    document.getElementById('chName').textContent = name;
+    if(editBotAvatarData) document.getElementById('chAvatar').innerHTML = `<img src="${editBotAvatarData}"/>`;
+    currentChatData.name = name;
+    currentChatData.botScript = script;
+    if(editBotAvatarData) currentChatData.photoURL = editBotAvatarData;
+  }
+  closeModal('editBotModal');
 };
 
 window.searchGroupUsers = async (val) => {
