@@ -724,16 +724,25 @@ async function sendVerificationEmail(toEmail, code) {
     alert('Email-сервис не настроен. Код для теста: ' + code);
     return;
   }
+  console.log('[EmailJS] отправка письма на', toEmail, 'с кодом', code);
   try {
-    await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email: toEmail, code
+    const res = await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: toEmail,   // должно совпадать с переменной в поле "To Email" шаблона
+      email: toEmail,      // дубль на случай, если в шаблоне переменная названа просто {{email}}
+      to_name: toEmail,
+      code, message: code, passcode: code // дубли на случай других имён переменной в шаблоне
     });
+    console.log('[EmailJS] ответ сервера:', res.status, res.text);
   } catch(err) {
-    console.error('EmailJS error:', err);
-    // Частая причина: сайт открыт как file:// — в EmailJS нужно включить
-    // Account → Security → "Allow EmailJS API for non-browser applications",
-    // иначе запросы с file:// origin блокируются.
-    throw new Error('Письмо не отправлено (' + (err?.text||err?.message||'см. консоль') + '). Если сайт открыт как file://, включи в EmailJS: Account → Security → Allow EmailJS API for non-browser applications.');
+    console.error('[EmailJS] ошибка:', err);
+    // Частые причины:
+    // 1) Сайт открыт как file:// — нужно включить в EmailJS:
+    //    Account → Security → "Allow EmailJS API for non-browser applications"
+    // 2) В шаблоне письма поле "To Email" не привязано к {{to_email}}, а
+    //    содержит твою собственную почту — тогда письмо реально уходит,
+    //    но не туда, куда нужно.
+    // 3) Email-сервис (Gmail) отключился — Email Services → проверить статус "Connected".
+    throw new Error('Письмо не отправлено: ' + (err?.text||err?.message||JSON.stringify(err)));
   }
 }
 
@@ -820,10 +829,16 @@ window.resendRegisterCode = async () => {
   const email = currentUser.email;
   const code = String(Math.floor(100000 + Math.random()*900000));
   pendingEmailCode = {code, expires: Date.now() + 10*60*1000};
+  const errEl = document.getElementById('authErr');
+  errEl.style.color = '';
+  errEl.textContent = 'Отправляем код...';
   try {
     await sendVerificationEmail(email, code);
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Код отправлен на ' + email + '. Если письма нет в течение минуты — проверь "Спам" или см. инструкцию в чате.';
   } catch(e) {
-    document.getElementById('authErr').textContent = e.message||'Не удалось отправить код';
+    errEl.style.color = '';
+    errEl.textContent = e.message||'Не удалось отправить код';
   }
 };
 
