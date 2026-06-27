@@ -263,6 +263,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   padding:28px;width:380px;max-height:80vh;overflow-y:auto;
   box-shadow:0 30px 60px rgba(0,0,0,.5);
 }
+.modal.modal-wide{width:640px;max-width:92vw}
 .modal h2{font-size:18px;font-weight:800;margin-bottom:20px}
 .modal-close{
   float:right;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;margin-top:-4px;
@@ -506,21 +507,27 @@ input[type=file]{display:none}
 
 <!-- NEW BOT MODAL -->
 <div class="modal-bg" id="newBotModal">
-  <div class="modal" style="text-align:center">
+  <div class="modal modal-wide">
     <button class="modal-close" onclick="closeModal('newBotModal')">✕</button>
     <h2>Создать бота</h2>
-    <div class="profile-avatar-wrap" id="botAvatarWrap" onclick="document.getElementById('botAvatarInput').click()">🤖</div>
-    <input type="file" id="botAvatarInput" accept="image/*" onchange="previewBotAvatar(this)"/>
-    <div class="field" style="text-align:left">
-      <label>Имя бота</label>
-      <input type="text" id="botName" placeholder="Например: Помощник" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+    <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:0 0 140px;text-align:center">
+        <div class="profile-avatar-wrap" id="botAvatarWrap" onclick="document.getElementById('botAvatarInput').click()" style="margin:0 auto 10px">🤖</div>
+        <input type="file" id="botAvatarInput" accept="image/*" onchange="previewBotAvatar(this)"/>
+        <div class="field" style="text-align:left;margin-top:6px">
+          <label>Имя бота</label>
+          <input type="text" id="botName" placeholder="Помощник" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+        </div>
+      </div>
+      <div style="flex:1;min-width:280px;text-align:left">
+        <div class="field" style="text-align:left;margin-bottom:0">
+          <label>Логика бота (JavaScript)</label>
+          <textarea id="botScript" rows="14" placeholder="// переменная message — текст от пользователя&#10;// верни строку — это будет ответ бота&#10;if(message.toLowerCase().includes('привет')) return 'Привет! Как дела?';&#10;return 'Эхо: ' + message;" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;line-height:1.5;outline:none;resize:vertical"></textarea>
+          <div style="font-size:12px;color:var(--text3);margin-top:6px">Пиши обычный JS. Доступна переменная <code>message</code> (текст пользователя). Верни строку — бот её отправит. Можно async/await и fetch к открытым API.</div>
+        </div>
+      </div>
     </div>
-    <div class="field" style="text-align:left">
-      <label>Логика бота (JavaScript)</label>
-      <textarea id="botScript" rows="8" placeholder="// переменная message — текст от пользователя&#10;// верни строку — это будет ответ бота&#10;if(message.toLowerCase().includes('привет')) return 'Привет! Как дела?';&#10;return 'Эхо: ' + message;" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none;resize:vertical"></textarea>
-      <div style="font-size:12px;color:var(--text3);margin-top:6px;text-align:left">Пиши обычный JS. Доступна переменная <code>message</code> (текст пользователя). Верни строку — бот её отправит. Можно async/await и fetch к открытым API.</div>
-    </div>
-    <button class="btn-primary" onclick="createBot()">Создать бота</button>
+    <button class="btn-primary" style="margin-top:18px" onclick="createBot()">Создать бота</button>
   </div>
 </div>
 
@@ -543,20 +550,26 @@ input[type=file]{display:none}
 
 <!-- EDIT BOT MODAL -->
 <div class="modal-bg" id="editBotModal">
-  <div class="modal" style="text-align:center">
+  <div class="modal modal-wide">
     <button class="modal-close" onclick="closeModal('editBotModal')">✕</button>
     <h2>Бот</h2>
-    <div class="profile-avatar-wrap" id="editBotAvatarWrap" onclick="document.getElementById('editBotAvatarInput').click()">🤖</div>
-    <input type="file" id="editBotAvatarInput" accept="image/*" onchange="uploadEditBotAvatar(this)"/>
-    <div class="field" style="text-align:left">
-      <label>Имя бота</label>
-      <input type="text" id="editBotName" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+    <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:0 0 140px;text-align:center">
+        <div class="profile-avatar-wrap" id="editBotAvatarWrap" onclick="document.getElementById('editBotAvatarInput').click()" style="margin:0 auto 10px">🤖</div>
+        <input type="file" id="editBotAvatarInput" accept="image/*" onchange="uploadEditBotAvatar(this)"/>
+        <div class="field" style="text-align:left;margin-top:6px">
+          <label>Имя бота</label>
+          <input type="text" id="editBotName" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
+        </div>
+      </div>
+      <div style="flex:1;min-width:280px;text-align:left">
+        <div class="field" style="text-align:left;margin-bottom:0">
+          <label>Логика бота (JavaScript)</label>
+          <textarea id="editBotScript" rows="14" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;line-height:1.5;outline:none;resize:vertical"></textarea>
+        </div>
+      </div>
     </div>
-    <div class="field" style="text-align:left">
-      <label>Логика бота (JavaScript)</label>
-      <textarea id="editBotScript" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;outline:none;resize:vertical"></textarea>
-    </div>
-    <button class="btn-primary" onclick="saveEditBot()">Сохранить</button>
+    <button class="btn-primary" style="margin-top:18px" onclick="saveEditBot()">Сохранить</button>
   </div>
 </div>
 
@@ -586,8 +599,13 @@ input[type=file]{display:none}
     </div>
     <div class="divider" style="margin-top:18px"></div>
     <div style="text-align:left">
-      <div class="section-label" style="padding-left:0">Цвет темы чатов</div>
+      <div class="section-label" style="padding-left:0">Цвет темы мессенджера</div>
       <div id="themeColorRow" style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap"></div>
+    </div>
+    <div class="divider" style="margin-top:18px"></div>
+    <div style="text-align:left">
+      <div class="section-label" style="padding-left:0;color:var(--red)">Опасная зона</div>
+      <button class="icon-btn" style="width:100%;margin-top:8px;color:var(--red);font-weight:700" onclick="deleteMyAccount()">Удалить аккаунт навсегда</button>
     </div>
   </div>
 </div>
@@ -665,7 +683,7 @@ input[type=file]{display:none}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, updateProfile, deleteUser }
+  signOut, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
   onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion, deleteDoc }
@@ -683,6 +701,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Применяем сохранённую тему сразу, до входа — чтобы и экран логина/регистрации был в выбранном цвете
+applyThemeColor(localStorage.getItem('themeColor') || 'violet');
 
 let recordTimeout = null;
 
@@ -863,6 +884,35 @@ window.doLogout = async () => {
   document.getElementById('verifyForm').style.display = 'none';
   document.getElementById('loginForm').style.display = 'block';
   await signOut(auth);
+};
+
+window.deleteMyAccount = async () => {
+  if(!currentUser) return;
+  if(!confirm('Аккаунт и все твои данные будут удалены навсегда, восстановить их нельзя. Точно продолжить?')) return;
+  const password = prompt('Для подтверждения введи свой пароль:');
+  if(!password) return;
+  try {
+    // Firebase требует "свежую" авторизацию перед удалением аккаунта
+    const cred = EmailAuthProvider.credential(currentUser.email, password);
+    await reauthenticateWithCredential(currentUser, cred);
+
+    const uid = currentUser.uid;
+    if(chatsUnsub) chatsUnsub();
+    if(messagesUnsub) messagesUnsub();
+    if(globalCallListenerUnsub) globalCallListenerUnsub();
+
+    await deleteDoc(doc(db,'users',uid)).catch(()=>{});
+    await deleteUser(currentUser);
+
+    closeModal('profileModal');
+    alert('Аккаунт удалён.');
+  } catch(e) {
+    if(e.code==='auth/wrong-password' || e.code==='auth/invalid-credential') {
+      alert('Неверный пароль.');
+    } else {
+      alert('Не удалось удалить аккаунт: ' + (e.message||e));
+    }
+  }
 };
 
 async function enterApp() {
