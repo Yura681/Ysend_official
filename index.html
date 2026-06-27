@@ -677,6 +677,23 @@ input[type=file]{display:none}
 </div>
 
 <!-- EmailJS SDK (official) -->
+<script>
+// Диагностика: если основной скрипт (модуль ниже) упадёт с ошибкой при
+// загрузке/выполнении (например из-за блокировки CORS при открытии файла
+// напрямую через file:// или ошибки сети), кнопки входа/регистрации
+// перестанут отвечать без видимой причины. Этот блок выводит реальную
+// ошибку прямо на экране, чтобы её было легко увидеть и прислать для починки.
+window.addEventListener('error', function(e){
+  console.error('[Global error]', e.message, e.filename, e.lineno, e.error);
+  var el = document.getElementById('authErr');
+  if(el) el.textContent = 'JS ошибка: ' + e.message + (e.filename ? (' (' + e.filename.split('/').pop() + ':' + e.lineno + ')') : '');
+});
+window.addEventListener('unhandledrejection', function(e){
+  console.error('[Unhandled promise rejection]', e.reason);
+  var el = document.getElementById('authErr');
+  if(el) el.textContent = 'JS ошибка (promise): ' + (e.reason && (e.reason.code || e.reason.message) || e.reason);
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <!-- FIREBASE SDK -->
@@ -781,7 +798,8 @@ window.doLogin = async () => {
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
-    document.getElementById('authErr').textContent = 'Неверный email или пароль';
+    console.error('[doLogin] ошибка:', e);
+    document.getElementById('authErr').textContent = 'Ошибка входа: ' + (e.code || e.message || e);
   }
 };
 
@@ -801,7 +819,8 @@ window.doRegister = async () => {
     // можно только после ввода правильного кода.
     await startEmailVerificationFlow(email);
   } catch(e) {
-    document.getElementById('authErr').textContent = e.message.includes('email') ? 'Email уже занят' : 'Пароль минимум 6 символов';
+    console.error('[doRegister] ошибка:', e);
+    document.getElementById('authErr').textContent = 'Ошибка регистрации: ' + (e.code || e.message || e);
   }
 };
 
