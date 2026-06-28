@@ -404,6 +404,9 @@ input[type=file]{display:none}
     <div id="loginForm">
       <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"/></div>
       <div class="field"><label>Пароль</label><input type="password" id="loginPass" placeholder="••••••••"/></div>
+      <div style="text-align:right;margin:-8px 0 14px">
+        <a href="#" onclick="openForgotPassword();return false;" style="color:var(--accent2);font-size:13px;text-decoration:none">Я забыл пароль</a>
+      </div>
       <button class="btn-primary" onclick="doLogin()">Войти</button>
     </div>
     <div id="registerForm" style="display:none">
@@ -418,6 +421,21 @@ input[type=file]{display:none}
       <div class="field"><label>Код из письма</label><input type="text" id="verifyCodeInput" maxlength="6" placeholder="000000"/></div>
       <button class="btn-primary" onclick="confirmRegisterCode()">Подтвердить</button>
       <button class="btn-primary" style="background:var(--surface2);color:var(--text2);margin-top:8px" onclick="resendRegisterCode()">Отправить код ещё раз</button>
+    </div>
+    <div id="forgotForm" style="display:none">
+      <button class="modal-close" onclick="backToLoginFromForgot()" title="Назад" style="float:none;margin:-4px 0 8px -4px">←</button>
+      <div class="auth-sub" style="margin-bottom:18px">Введи почту, привязанную к аккаунту — пришлём код для восстановления.</div>
+      <div class="field"><label>Email</label><input type="email" id="forgotEmail" placeholder="you@example.com"/></div>
+      <button class="btn-primary" onclick="sendForgotPasswordEmail()">Отправить код</button>
+    </div>
+    <div id="forgotResetForm" style="display:none">
+      <button class="modal-close" onclick="backToLoginFromForgot()" title="Назад" style="float:none;margin:-4px 0 8px -4px">←</button>
+      <div class="auth-sub" style="margin-bottom:18px">Мы отправили код на <b id="forgotEmailLabel"></b>. Введи его и новый пароль.</div>
+      <div class="field"><label>Код из письма</label><input type="text" id="forgotCodeInput" maxlength="6" placeholder="000000"/></div>
+      <div class="field"><label>Новый пароль</label><input type="password" id="forgotNewPass" placeholder="Минимум 6 символов"/></div>
+      <div class="field"><label>Повтори новый пароль</label><input type="password" id="forgotNewPass2" placeholder="Повтори пароль"/></div>
+      <button class="btn-primary" onclick="confirmForgotPassword()">Сменить пароль</button>
+      <button class="btn-primary" style="background:var(--surface2);color:var(--text2);margin-top:8px" onclick="sendForgotPasswordEmail()">Отправить код ещё раз</button>
     </div>
     <div class="auth-err" id="authErr"></div>
   </div>
@@ -711,7 +729,8 @@ return 'Эхо: ' + message;"></textarea>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  signOut, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential }
+  signOut, onAuthStateChanged, updateProfile, deleteUser, EmailAuthProvider, reauthenticateWithCredential,
+  sendPasswordResetEmail, verifyPasswordResetCode, confirmPasswordReset }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
   onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion, deleteDoc }
@@ -807,6 +826,90 @@ window.doLogin = async () => {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
     document.getElementById('authErr').textContent = 'Неверный email или пароль';
+  }
+};
+
+// ───── FORGOT PASSWORD ─────
+// ВАЖНО: сменить пароль аккаунта, в который мы НЕ вошли, можно только через
+// собственный защищённый механизм Firebase (он криптографически подтверждает,
+// что письмо реально дошло именно на привязанную почту). EmailJS не может
+// сгенерировать такой защищённый код — у него нет доступа к серверным ключам
+// Firebase. Поэтому письмо с кодом для смены пароля отправляет сам Firebase
+// (его можно стилизовать в консоли: Authentication → Templates → Password
+// reset), а наш код проверяет введённый код/ссылку и применяет новый пароль.
+window.openForgotPassword = () => {
+  document.querySelector('.auth-tabs').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('forgotForm').style.display = 'block';
+  document.getElementById('forgotResetForm').style.display = 'none';
+  document.getElementById('authErr').style.color = '';
+  document.getElementById('authErr').textContent = '';
+  document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value || '';
+};
+
+window.backToLoginFromForgot = () => {
+  document.getElementById('forgotForm').style.display = 'none';
+  document.getElementById('forgotResetForm').style.display = 'none';
+  document.querySelector('.auth-tabs').style.display = 'flex';
+  document.getElementById('authErr').style.color = '';
+  document.getElementById('authErr').textContent = '';
+  switchTab('login');
+};
+
+let forgotPasswordEmail = '';
+
+window.sendForgotPasswordEmail = async () => {
+  const emailInput = document.getElementById('forgotEmail').value.trim();
+  const email = emailInput || forgotPasswordEmail;
+  if(!email) { document.getElementById('authErr').textContent = 'Введи email'; return; }
+  forgotPasswordEmail = email;
+  const errEl = document.getElementById('authErr');
+  errEl.style.color = '';
+  errEl.textContent = 'Отправляем письмо...';
+  try {
+    await sendPasswordResetEmail(auth, email);
+    document.getElementById('forgotForm').style.display = 'none';
+    document.getElementById('forgotResetForm').style.display = 'block';
+    document.getElementById('forgotEmailLabel').textContent = email;
+    document.getElementById('forgotCodeInput').value = '';
+    document.getElementById('forgotNewPass').value = '';
+    document.getElementById('forgotNewPass2').value = '';
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Письмо отправлено на ' + email + '. Открой его и вставь код (или всю ссылку) из письма в поле ниже.';
+  } catch(e) {
+    errEl.style.color = '';
+    errEl.textContent = e.code==='auth/user-not-found' ? 'Аккаунт с такой почтой не найден' : ('Не удалось отправить письмо: ' + (e.message||e));
+  }
+};
+
+function extractResetCode(raw) {
+  raw = raw.trim();
+  const m = raw.match(/oobCode=([^&\s]+)/); // если вставили всю ссылку из письма — достаём код из неё
+  if(m) return decodeURIComponent(m[1]);
+  return raw; // иначе считаем, что вставили только сам код
+}
+
+window.confirmForgotPassword = async () => {
+  const errEl = document.getElementById('authErr');
+  const codeRaw = document.getElementById('forgotCodeInput').value;
+  const pass1 = document.getElementById('forgotNewPass').value;
+  const pass2 = document.getElementById('forgotNewPass2').value;
+  errEl.style.color = '';
+  if(!codeRaw.trim()) { errEl.textContent = 'Вставь код из письма'; return; }
+  if(pass1.length < 6) { errEl.textContent = 'Пароль минимум 6 символов'; return; }
+  if(pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают, проверь ввод'; return; }
+  const code = extractResetCode(codeRaw);
+  errEl.textContent = 'Проверяем код...';
+  try {
+    await verifyPasswordResetCode(auth, code);
+    await confirmPasswordReset(auth, code, pass1);
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'Пароль изменён! Теперь можно войти с новым паролем.';
+    setTimeout(backToLoginFromForgot, 1800);
+  } catch(e) {
+    errEl.style.color = '';
+    errEl.textContent = e.code==='auth/invalid-action-code' ? 'Неверный или устаревший код — запроси новый' : ('Не удалось сменить пароль: ' + (e.message||e));
   }
 };
 
