@@ -1173,6 +1173,10 @@ window.doLogout = async () => {
   if(chatsUnsub) chatsUnsub();
   if(messagesUnsub) messagesUnsub();
   if(globalCallListenerUnsub) globalCallListenerUnsub();
+  if(window._heartbeatInterval) { clearInterval(window._heartbeatInterval); window._heartbeatInterval = null; }
+  if(currentUser) {
+    try { await setDoc(doc(db,'users',currentUser.uid), {online:false, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
+  }
   document.querySelector('.auth-tabs').style.display = 'flex';
   document.getElementById('verifyForm').style.display = 'none';
   document.getElementById('loginForm').style.display = 'block';
@@ -1215,8 +1219,29 @@ window.deleteMyAccount = async () => {
 async function enterApp() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('app').classList.add('visible');
-  await setDoc(doc(db,'users',currentUser.uid), {online:true}, {merge:true});
+  await setDoc(doc(db,'users',currentUser.uid), {online:true, lastSeen: serverTimestamp()}, {merge:true});
   loadMyProfile();
+
+  // Heartbeat: обновляем lastSeen каждые 30 секунд пока вкладка открыта
+  if(window._heartbeatInterval) clearInterval(window._heartbeatInterval);
+  window._heartbeatInterval = setInterval(async () => {
+    if(!currentUser) return;
+    try { await setDoc(doc(db,'users',currentUser.uid), {online:true, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
+  }, 30000);
+
+  // Сброс статуса при закрытии вкладки / уходе
+  window._setOffline = async () => {
+    try { await setDoc(doc(db,'users',currentUser.uid), {online:false, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
+  };
+  window.addEventListener('beforeunload', window._setOffline);
+  document.addEventListener('visibilitychange', async () => {
+    if(!currentUser) return;
+    if(document.hidden) {
+      try { await setDoc(doc(db,'users',currentUser.uid), {online:false, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
+    } else {
+      try { await setDoc(doc(db,'users',currentUser.uid), {online:true, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
+    }
+  });
   listenChats();
   listenIncomingCalls();
   initNotifications();
@@ -1446,7 +1471,7 @@ async function renderChatList(chats) {
         const ud = uSnap.data()||{};
         name = ud.name||'Пользователь';
         photo = ud.photoURL||'';
-        isOnline = ud.online||false;
+        isOnline = isUserOnline(ud);
       }
     }
     return {chat, name, photo, isOnline, otherId};
@@ -1570,7 +1595,7 @@ async function openChat(chat) {
       const ud = uSnap.data()||{};
       name = ud.name||'Пользователь';
       photo = ud.photoURL||'';
-      status = ud.online ? '● В сети' : 'Не в сети';
+      status = isUserOnline(ud) ? '● В сети' : ud.lastSeen ? 'Был(а) ' + formatLastSeen(ud.lastSeen) : 'Не в сети';
     }
     document.getElementById('callBtn').style.display = '';
     document.getElementById('videoCallBtn').style.display = '';
@@ -2509,6 +2534,25 @@ document.addEventListener('click', e => {
 });
 
 // ───── UTILS ─────
+function isUserOnline(ud) {
+  if(!ud.online) return false;
+  if(!ud.lastSeen) return false;
+  const d = ud.lastSeen.toDate ? ud.lastSeen.toDate() : new Date(ud.lastSeen.seconds * 1000);
+  return (Date.now() - d.getTime()) < 2 * 60 * 1000; // онлайн если heartbeat был < 2 минут назад
+}
+
+function formatLastSeen(ts) {
+  if(!ts) return 'давно';
+  const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if(mins < 1) return 'только что';
+  if(mins < 60) return mins + ' мин. назад';
+  const hours = Math.floor(mins / 60);
+  if(hours < 24) return hours + ' ч. назад';
+  return d.toLocaleDateString('ru', {day:'2-digit', month:'2-digit'});
+}
+
 function formatTime(ts) {
   if(!ts) return '';
   const d = ts.toDate ? ts.toDate() : new Date(ts.seconds*1000);
