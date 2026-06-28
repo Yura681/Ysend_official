@@ -468,6 +468,106 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 .section-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:8px 10px 4px}
 
 input[type=file]{display:none}
+
+/* ───── MESSAGE ACTIONS ───── */
+.msg-actions-btn{
+  position:absolute;top:4px;right:4px;width:28px;height:28px;
+  border-radius:50%;background:var(--surface3);border:none;
+  color:var(--text2);cursor:pointer;display:none;align-items:center;
+  justify-content:center;transition:all .2s;font-size:14px;
+}
+.msg-row:hover .msg-actions-btn{display:flex}
+.msg-actions-btn:hover{background:var(--accent);color:#fff}
+
+/* CONTEXT MENU */
+.msg-context-menu{
+  position:absolute;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:6px;min-width:140px;box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  z-index:100;display:none;
+}
+.msg-context-menu.open{display:block}
+.msg-context-item{
+  padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;gap:8px;color:var(--text);transition:background .15s;
+}
+.msg-context-item:hover{background:var(--surface3)}
+.msg-context-item.danger{color:var(--red)}
+
+/* REACTIONS */
+.msg-reactions{
+  display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;
+}
+.reaction-badge{
+  background:var(--surface3);border-radius:16px;padding:2px 8px;
+  font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;
+  border:1px solid var(--border);transition:all .15s;
+}
+.reaction-badge:hover{background:var(--surface2)}
+.reaction-badge.own{border-color:var(--accent)}
+.reaction-count{font-weight:600;color:var(--text2)}
+
+/* REACTION PICKER */
+.reaction-picker{
+  position:absolute;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:8px;display:none;grid-template-columns:repeat(6,1fr);
+  gap:4px;box-shadow:0 10px 30px rgba(0,0,0,0.4);z-index:101;
+}
+.reaction-picker.open{display:grid}
+.reaction-emoji{
+  width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-size:18px;transition:background .15s;
+}
+.reaction-emoji:hover{background:var(--surface3)}
+
+/* REPLY PREVIEW */
+.reply-preview{
+  background:var(--surface2);border-left:3px solid var(--accent);
+  padding:8px 12px;margin-bottom:8px;border-radius:0 8px 8px 0;
+  display:none;align-items:center;justify-content:space-between;
+}
+.reply-preview.open{display:flex}
+.reply-preview-text{font-size:12px;color:var(--text2);flex:1}
+.reply-preview-close{
+  width:24px;height:24px;border-radius:50%;border:none;background:var(--surface3);
+  color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.reply-preview-close:hover{background:var(--red);color:#fff}
+
+/* QUOTED MESSAGE IN BUBBLE */
+.msg-quote{
+  background:var(--surface3);border-left:2px solid var(--accent);
+  padding:6px 8px;margin-bottom:6px;border-radius:4px;font-size:12px;
+  color:var(--text2);display:none;
+}
+.msg-quote.show{display:block}
+.msg-quote-author{font-weight:600;color:var(--accent2);margin-bottom:2px}
+
+/* READ RECEIPTS */
+.read-receipts{
+  display:flex;gap:2px;font-size:10px;color:var(--text3);
+  margin-left:4px;
+}
+.read-receipts .read{color:var(--green)}
+.read-receipts .unread{color:var(--text3)}
+
+/* TYPING INDICATOR */
+.typing-indicator{
+  font-size:12px;color:var(--accent2);font-style:italic;
+  min-height:16px;margin-top:4px;opacity:0;transition:opacity .2s;
+}
+.typing-indicator.show{opacity:1}
+
+/* EDITED MARKER */
+.edited-marker{
+  font-size:10px;color:var(--text3);font-style:italic;margin-left:4px;
+}
+
+/* FORWARD MODAL */
+.forward-chat-item{
+  display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;
+  cursor:pointer;transition:background .15s;
+}
+.forward-chat-item:hover{background:var(--surface2)}
 </style>
 </head>
 <body>
@@ -602,6 +702,10 @@ input[type=file]{display:none}
       </div>
       <div class="messages-area" id="messagesArea"></div>
       <div class="input-area">
+        <div class="reply-preview" id="replyPreview">
+          <div class="reply-preview-text" id="replyPreviewText">Ответ на сообщение</div>
+          <button class="reply-preview-close" onclick="cancelReply()">✕</button>
+        </div>
         <div class="attach-menu">
           <button class="icon-btn" onclick="toggleAttach()" style="width:44px;height:44px">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
@@ -622,7 +726,7 @@ input[type=file]{display:none}
           </div>
         </div>
         <textarea class="msg-input" id="msgInput" placeholder="Сообщение..." rows="1"
-          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          onkeydown="handleKey(event)" oninput="autoResize(this);handleTyping()"></textarea>
         <button class="record-btn" id="recordBtn" onclick="toggleRecord()" title="Голосовое">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         </button>
@@ -638,6 +742,40 @@ input[type=file]{display:none}
 <input type="file" id="fileImage" accept="image/*" onchange="uploadFile(this,'image')"/>
 <input type="file" id="fileVideo" accept="video/*" onchange="uploadFile(this,'video')"/>
 <input type="file" id="fileAny" onchange="uploadFile(this,'file')"/>
+
+<!-- MESSAGE CONTEXT MENU -->
+<div class="msg-context-menu" id="msgContextMenu">
+  <div class="msg-context-item" onclick="replyToMessage()">↩ Ответить</div>
+  <div class="msg-context-item" onclick="editMessage()">✎ Редактировать</div>
+  <div class="msg-context-item" onclick="forwardMessage()">➦ Переслать</div>
+  <div class="msg-context-item" onclick="showReactionPicker()">❤️ Реакция</div>
+  <div class="msg-context-item danger" onclick="deleteMessage()">🗑 Удалить</div>
+</div>
+
+<!-- REACTION PICKER -->
+<div class="reaction-picker" id="reactionPicker">
+  <div class="reaction-emoji" onclick="addReaction('👍')">👍</div>
+  <div class="reaction-emoji" onclick="addReaction('❤️')">❤️</div>
+  <div class="reaction-emoji" onclick="addReaction('😂')">😂</div>
+  <div class="reaction-emoji" onclick="addReaction('😮')">😮</div>
+  <div class="reaction-emoji" onclick="addReaction('😢')">😢</div>
+  <div class="reaction-emoji" onclick="addReaction('🔥')">🔥</div>
+  <div class="reaction-emoji" onclick="addReaction('👎')">👎</div>
+  <div class="reaction-emoji" onclick="addReaction('🎉')">🎉</div>
+  <div class="reaction-emoji" onclick="addReaction('💯')">💯</div>
+  <div class="reaction-emoji" onclick="addReaction('🤔')">🤔</div>
+  <div class="reaction-emoji" onclick="addReaction('😡')">😡</div>
+  <div class="reaction-emoji" onclick="addReaction('👏')">👏</div>
+</div>
+
+<!-- FORWARD MODAL -->
+<div class="modal-bg" id="forwardModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('forwardModal')">✕</button>
+    <h2>Переслать сообщение</h2>
+    <div id="forwardChatList" style="max-height:300px;overflow-y:auto"></div>
+  </div>
+</div>
 
 <!-- NEW CHAT CHOOSER MODAL -->
 <div class="modal-bg" id="newChatChooserModal">
@@ -944,6 +1082,15 @@ let openChatToken = 0;        // guard against race conditions when switching ch
 let myBlockedUsers = [];      // uids I've blocked
 let notificationsEnabled = (localStorage.getItem('notificationsEnabled') !== 'false');
 let pendingEmailCode = null;  // {code, expires}
+
+// ───── MESSAGE FEATURES ─────
+let replyToMsgId = null;
+let replyToMsgText = null;
+let replyToMsgAuthor = null;
+let contextMenuMsgId = null;
+let typingTimeout = null;
+let typingUnsub = null;
+let currentMessages = []; // Store current messages for context menu access
 
 // ───── EMAILJS CONFIG ─────
 // Сайт не может сам отправлять письма (в браузере нет SMTP) — поэтому письма
@@ -1621,6 +1768,9 @@ async function openChat(chat) {
     renderMessages(snap.docs.map(d=>({id:d.id,...d.data()})));
   });
   messagesUnsub = unsub;
+  
+  // Listen for typing indicator (direct chats only)
+  listenTyping();
 }
 
 function renderChatHeaderActions(chat) {
@@ -1683,6 +1833,9 @@ async function renderMessages(msgs) {
   const area = document.getElementById('messagesArea');
   area.innerHTML = '';
 
+  // Store messages for context menu access
+  currentMessages = msgs;
+
   // De-dupe by message id (defensive: Firestore can deliver the same snapshot
   // twice — once optimistically, once server-confirmed — this guarantees we
   // never render the same message id more than once).
@@ -1694,39 +1847,109 @@ async function renderMessages(msgs) {
   msgs = msgs.filter(m => !myBlockedUsers.includes(m.sender) && !(botBlockedHere && m.sender==='__bot__'));
 
   // Cache user data (bot messages use the chat's own name/avatar instead of a real user doc)
-  const userCache = {};
+  window.userCache = {};
   for(const msg of msgs) {
     if(msg.sender === '__bot__') {
-      userCache[msg.sender] = {name: currentChatData?.name||'Бот', photoURL: currentChatData?.photoURL||''};
-    } else if(msg.sender && !userCache[msg.sender]) {
+      window.userCache[msg.sender] = {name: currentChatData?.name||'Бот', photoURL: currentChatData?.photoURL||''};
+    } else if(msg.sender && !window.userCache[msg.sender]) {
       const snap = await getDoc(doc(db,'users',msg.sender));
-      userCache[msg.sender] = snap.data()||{};
+      window.userCache[msg.sender] = snap.data()||{};
     }
   }
 
   for(const msg of msgs) {
     const isOut = msg.sender === currentUser.uid;
-    const ud = userCache[msg.sender]||{};
+    const ud = window.userCache[msg.sender]||{};
     const row = document.createElement('div');
     row.className = `msg-row ${isOut?'out':'in'}`;
+    row.setAttribute('data-msg-id', msg.id);
+    row.setAttribute('data-msg', JSON.stringify(msg));
+    row.oncontextmenu = (e) => showContextMenu(e, msg.id);
 
+    // Build content
     let content = '';
-    if(msg.type==='text') content = `<div class="msg-bubble">${escapeHtml(msg.text)}</div>`;
-    else if(msg.type==='image') content = `<div class="msg-bubble" style="padding:4px"><img class="msg-img" src="${msg.url}" onclick="window.open('${msg.url}')"/></div>`;
-    else if(msg.type==='video') content = `<div class="msg-bubble" style="padding:4px"><video class="msg-video" controls src="${msg.url}"></video></div>`;
-    else if(msg.type==='voice') content = renderVoice(msg.url);
-    else if(msg.type==='file') content = `<div class="msg-file" onclick="window.open('${msg.url}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${msg.fileName||'Файл'}</span></div>`;
+    
+    // Reply quote
+    if(msg.replyTo) {
+      const replyAuthor = msg.replyTo.author || 'Пользователь';
+      const replyText = msg.replyTo.text || '[Сообщение]';
+      content += `<div class="msg-quote show">
+        <div class="msg-quote-author">${replyAuthor}</div>
+        <div>${escapeHtml(replyText.slice(0,50))}${replyText.length>50?'...':''}</div>
+      </div>`;
+    }
+    
+    // Message content
+    if(msg.type==='text') content += `<div class="msg-bubble">${escapeHtml(msg.text)}</div>`;
+    else if(msg.type==='image') content += `<div class="msg-bubble" style="padding:4px"><img class="msg-img" src="${msg.url}" onclick="window.open('${msg.url}')"/></div>`;
+    else if(msg.type==='video') content += `<div class="msg-bubble" style="padding:4px"><video class="msg-video" controls src="${msg.url}"></video></div>`;
+    else if(msg.type==='voice') content += renderVoice(msg.url);
+    else if(msg.type==='file') content += `<div class="msg-file" onclick="window.open('${msg.url}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${msg.fileName||'Файл'}</span></div>`;
+
+    // Forwarded marker
+    if(msg.forwarded) {
+      content += `<div style="font-size:10px;color:var(--text3);font-style:italic;margin-top:4px">Переслано</div>`;
+    }
+
+    // Edited marker
+    if(msg.edited) {
+      content += `<span class="edited-marker">(отредактировано)</span>`;
+    }
+
+    // Reactions
+    if(msg.reactions && msg.reactions.length > 0) {
+      const reactionCounts = {};
+      msg.reactions.forEach(r => {
+        reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
+      });
+      const reactionHtml = Object.entries(reactionCounts).map(([emoji, count]) => 
+        `<div class="reaction-badge" onclick="addReaction('${emoji}')">${emoji} <span class="reaction-count">${count}</span></div>`
+      ).join('');
+      content += `<div class="msg-reactions">${reactionHtml}</div>`;
+    }
+
+    // Read receipts (for outgoing messages in direct chats)
+    let readStatus = '';
+    if(isOut && currentChatType === 'direct') {
+      const otherId = currentChatData.members.find(m=>m!==currentUser.uid);
+      if(otherId && msg.readBy && msg.readBy.includes(otherId)) {
+        readStatus = '<span class="read-receipts read">✓✓</span>';
+      } else {
+        readStatus = '<span class="read-receipts unread">✓</span>';
+      }
+    }
 
     row.innerHTML = `
       ${!isOut?`<div class="msg-avatar">${ud.photoURL?`<img src="${ud.photoURL}"/>`:(ud.name||'?')[0].toUpperCase()}</div>`:''}
-      <div>
+      <div style="position:relative">
+        <button class="msg-actions-btn" onclick="showContextMenu(event,'${msg.id}')">⋮</button>
         ${!isOut&&currentChatType==='group'?`<div style="font-size:11px;color:var(--accent2);margin-bottom:4px;font-weight:600">${ud.name||'?'}</div>`:''}
         ${content}
-        <div class="msg-time">${formatTime(msg.time)}</div>
+        <div class="msg-time">${formatTime(msg.time)}${readStatus}</div>
       </div>`;
     area.appendChild(row);
   }
   area.scrollTop = area.scrollHeight;
+  
+  // Mark messages as read
+  markMessagesAsRead(msgs);
+}
+
+// ───── READ RECEIPTS ─────
+async function markMessagesAsRead(msgs) {
+  if(currentChatType !== 'direct') return;
+  const otherId = currentChatData?.members?.find(m=>m!==currentUser.uid);
+  if(!otherId) return;
+  
+  // Mark incoming messages from other user as read
+  const unreadMsgs = msgs.filter(m => m.sender === otherId && !m.readBy?.includes(currentUser.uid));
+  for(const msg of unreadMsgs) {
+    try {
+      await updateDoc(doc(db,'chats',currentChatId,'messages',msg.id), {
+        readBy: arrayUnion(currentUser.uid)
+      });
+    } catch(e) {}
+  }
 }
 
 function renderVoice(url) {
@@ -1765,10 +1988,24 @@ window.sendMessage = async () => {
   input.style.height = '';
   const chatId = currentChatId;
   const chatData = currentChatData;
+
+  // Build message data
+  const msgData = {
+    type:'text', text, sender:currentUser.uid, time:serverTimestamp()
+  };
+
+  // Add reply info if replying
+  if(replyToMsgId) {
+    msgData.replyTo = {
+      id: replyToMsgId,
+      text: replyToMsgText,
+      author: replyToMsgAuthor
+    };
+    cancelReply();
+  }
+
   try {
-    await addDoc(collection(db,'chats',chatId,'messages'), {
-      type:'text', text, sender:currentUser.uid, time:serverTimestamp()
-    });
+    await addDoc(collection(db,'chats',chatId,'messages'), msgData);
     await updateDoc(doc(db,'chats',chatId), {
       lastMsg: text.slice(0,50), lastTime:serverTimestamp(), lastSender:currentUser.uid
     });
@@ -1779,6 +2016,280 @@ window.sendMessage = async () => {
     isSending = false;
   }
 };
+
+// ───── TYPING INDICATOR ─────
+window.handleTyping = () => {
+  if(!currentChatId || currentChatType!=='direct') return;
+  const input = document.getElementById('msgInput');
+  if(input.value.trim().length > 0) {
+    // Send typing status
+    setDoc(doc(db,'chats',currentChatId,'typing',currentUser.uid), {
+      uid: currentUser.uid,
+      timestamp: serverTimestamp()
+    }).catch(()=>{});
+    
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      // Clear typing after 3 seconds of inactivity
+      deleteDoc(doc(db,'chats',currentChatId,'typing',currentUser.uid)).catch(()=>{});
+    }, 3000);
+  }
+};
+
+function listenTyping() {
+  if(typingUnsub) typingUnsub();
+  if(!currentChatId || currentChatType!=='direct') return;
+  
+  const otherId = currentChatData.members.find(m=>m!==currentUser.uid);
+  if(!otherId) return;
+  
+  typingUnsub = onSnapshot(doc(db,'chats',currentChatId,'typing',otherId), snap => {
+    const statusEl = document.getElementById('chStatus');
+    if(!statusEl) return;
+    
+    if(snap.exists()) {
+      const data = snap.data();
+      const d = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp?.seconds * 1000);
+      const isRecent = (Date.now() - d.getTime()) < 5000; // typing if < 5 seconds ago
+      
+      if(isRecent) {
+        statusEl.textContent = 'печатает...';
+        statusEl.className = 'ch-status';
+      } else {
+        updateStatusFromUserDoc(otherId);
+      }
+    } else {
+      updateStatusFromUserDoc(otherId);
+    }
+  });
+}
+
+async function updateStatusFromUserDoc(otherId) {
+  const statusEl = document.getElementById('chStatus');
+  if(!statusEl) return;
+  const uSnap = await getDoc(doc(db,'users',otherId));
+  const ud = uSnap.data()||{};
+  statusEl.textContent = isUserOnline(ud) ? '● В сети' : ud.lastSeen ? 'Был(а) ' + formatLastSeen(ud.lastSeen) : 'Не в сети';
+  statusEl.className = 'ch-status' + (isUserOnline(ud) ? '' : ' offline');
+}
+
+// ───── REPLY ─────
+window.replyToMessage = () => {
+  const msg = findMessageById(contextMenuMsgId);
+  if(!msg) return;
+  
+  replyToMsgId = contextMenuMsgId;
+  replyToMsgText = msg.text || (msg.type==='image'?'[Фото]':msg.type==='video'?'[Видео]':msg.type==='voice'?'[Голосовое]':'[Файл]');
+  replyToMsgAuthor = msg.sender === currentUser.uid ? 'Вы' : getMessageAuthorName(msg);
+  
+  document.getElementById('replyPreviewText').textContent = `Ответ: ${replyToMsgAuthor}: ${replyToMsgText.slice(0,30)}...`;
+  document.getElementById('replyPreview').classList.add('open');
+  hideContextMenu();
+  document.getElementById('msgInput').focus();
+};
+
+window.cancelReply = () => {
+  replyToMsgId = null;
+  replyToMsgText = null;
+  replyToMsgAuthor = null;
+  document.getElementById('replyPreview').classList.remove('open');
+};
+
+function getMessageAuthorName(msg) {
+  if(msg.sender === '__bot__') return currentChatData?.name || 'Бот';
+  const ud = userCache?.[msg.sender];
+  return ud?.name || 'Пользователь';
+}
+
+// ───── CONTEXT MENU ─────
+window.showContextMenu = (e, msgId) => {
+  e.preventDefault();
+  contextMenuMsgId = msgId;
+  const menu = document.getElementById('msgContextMenu');
+  menu.style.left = e.pageX + 'px';
+  menu.style.top = e.pageY + 'px';
+  menu.classList.add('open');
+  
+  // Show/hide edit option based on message ownership
+  const msg = findMessageById(msgId);
+  const editItem = menu.querySelector('.msg-context-item:nth-child(2)');
+  if(editItem) {
+    editItem.style.display = msg && msg.sender === currentUser.uid ? 'flex' : 'none';
+  }
+};
+
+function hideContextMenu() {
+  document.getElementById('msgContextMenu').classList.remove('open');
+  document.getElementById('reactionPicker').classList.remove('open');
+  contextMenuMsgId = null;
+}
+
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.msg-context-menu') && !e.target.closest('.msg-actions-btn')) {
+    hideContextMenu();
+  }
+});
+
+function findMessageById(msgId) {
+  return currentMessages.find(m => m.id === msgId) || null;
+}
+
+// ───── EDIT MESSAGE ─────
+window.editMessage = async () => {
+  const msg = findMessageById(contextMenuMsgId);
+  if(!msg || msg.sender !== currentUser.uid) return;
+  if(msg.type !== 'text') { showToast('Можно редактировать только текстовые сообщения', 'info'); return; }
+  
+  hideContextMenu();
+  
+  const newText = await showPrompt('Введите новый текст сообщения:', {
+    icon: '✎',
+    title: 'Редактировать сообщение',
+    placeholder: msg.text
+  });
+  
+  if(!newText || newText.trim() === '') return;
+  
+  try {
+    await updateDoc(doc(db,'chats',currentChatId,'messages',contextMenuMsgId), {
+      text: newText.trim(),
+      edited: true
+    });
+    showToast('Сообщение отредактировано', 'ok');
+  } catch(e) {
+    console.error(e);
+    showToast('Не удалось отредактировать сообщение', 'err');
+  }
+};
+
+// ───── DELETE MESSAGE ─────
+window.deleteMessage = async () => {
+  const ok = await showConfirm('Сообщение будет удалено навсегда.', {
+    icon: '🗑',
+    title: 'Удалить сообщение?',
+    okText: 'Удалить'
+  });
+  if(!ok) return;
+  
+  hideContextMenu();
+  
+  try {
+    await deleteDoc(doc(db,'chats',currentChatId,'messages',contextMenuMsgId));
+    showToast('Сообщение удалено', 'ok');
+  } catch(e) {
+    console.error(e);
+    showToast('Не удалось удалить сообщение', 'err');
+  }
+};
+
+// ───── REACTIONS ─────
+window.showReactionPicker = () => {
+  const menu = document.getElementById('msgContextMenu');
+  const picker = document.getElementById('reactionPicker');
+  const rect = menu.getBoundingClientRect();
+  picker.style.left = rect.left + 'px';
+  picker.style.top = (rect.top - 200) + 'px';
+  picker.classList.add('open');
+};
+
+window.addReaction = async (emoji) => {
+  if(!contextMenuMsgId) return;
+  
+  try {
+    await updateDoc(doc(db,'chats',currentChatId,'messages',contextMenuMsgId), {
+      reactions: arrayUnion({
+        emoji: emoji,
+        userId: currentUser.uid
+      })
+    });
+  } catch(e) {
+    console.error(e);
+  }
+  
+  hideContextMenu();
+};
+
+// ───── FORWARD MESSAGE ─────
+window.forwardMessage = async () => {
+  const msg = findMessageById(contextMenuMsgId);
+  if(!msg) return;
+  
+  hideContextMenu();
+  
+  // Load chats for forwarding
+  const snap = await getDocs(query(collection(db,'chats'), where('members','array-contains',currentUser.uid)));
+  const list = document.getElementById('forwardChatList');
+  list.innerHTML = '';
+  
+  snap.forEach(d => {
+    const chat = {id:d.id,...d.data()};
+    if(chat.id === currentChatId) return; // skip current chat
+    
+    const item = document.createElement('div');
+    item.className = 'forward-chat-item';
+    
+    let name = '', photo = '';
+    if(chat.type==='group') {
+      name = chat.name || 'Группа';
+      photo = chat.photoURL || '';
+    } else if(chat.type==='bot') {
+      name = chat.name || 'Бот';
+      photo = chat.photoURL || '';
+    } else {
+      const otherId = chat.members.find(m=>m!==currentUser.uid);
+      if(otherId) {
+        const uSnap = getDoc(doc(db,'users',otherId));
+        const ud = uSnap.data()||{};
+        name = ud.name||'Пользователь';
+        photo = ud.photoURL||'';
+      }
+    }
+    
+    const initials = name[0]?.toUpperCase()||'?';
+    item.innerHTML = `
+      <div class="ci-avatar" style="width:36px;height:36px;font-size:14px">
+        ${photo?`<img src="${photo}"/>`:`<span>${initials}</span>`}
+      </div>
+      <div class="ur-name">${name}</div>
+    `;
+    item.onclick = () => forwardToChat(chat, msg);
+    list.appendChild(item);
+  });
+  
+  openModal('forwardModal');
+};
+
+async function forwardToChat(chat, msg) {
+  closeModal('forwardModal');
+  
+  const msgData = {
+    type: msg.type,
+    sender: currentUser.uid,
+    time: serverTimestamp(),
+    forwarded: true,
+    originalAuthor: msg.sender,
+    originalChatId: currentChatId
+  };
+  
+  if(msg.type === 'text') msgData.text = msg.text;
+  else if(msg.type === 'image') msgData.url = msg.url;
+  else if(msg.type === 'video') msgData.url = msg.url;
+  else if(msg.type === 'voice') msgData.url = msg.url;
+  else if(msg.type === 'file') { msgData.url = msg.url; msgData.fileName = msg.fileName; }
+  
+  try {
+    await addDoc(collection(db,'chats',chat.id,'messages'), msgData);
+    await updateDoc(doc(db,'chats',chat.id), {
+      lastMsg: 'Пересланное сообщение',
+      lastTime: serverTimestamp(),
+      lastSender: currentUser.uid
+    });
+    showToast('Сообщение переслано', 'ok');
+  } catch(e) {
+    console.error(e);
+    showToast('Не удалось переслать сообщение', 'err');
+  }
+}
 
 // Бот не имеет своего firebase-аккаунта — это просто JS-функция, которую
 // задаёт владелец чата. Она выполняется в браузере того, кто пишет боту.
