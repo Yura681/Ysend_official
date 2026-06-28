@@ -2221,9 +2221,9 @@ window.forwardMessage = async () => {
   const list = document.getElementById('forwardChatList');
   list.innerHTML = '';
   
-  snap.forEach(d => {
+  for(const d of snap.docs) {
     const chat = {id:d.id,...d.data()};
-    if(chat.id === currentChatId) return; // skip current chat
+    if(chat.id === currentChatId) continue; // skip current chat
     
     const item = document.createElement('div');
     item.className = 'forward-chat-item';
@@ -2238,7 +2238,7 @@ window.forwardMessage = async () => {
     } else {
       const otherId = chat.members.find(m=>m!==currentUser.uid);
       if(otherId) {
-        const uSnap = getDoc(doc(db,'users',otherId));
+        const uSnap = await getDoc(doc(db,'users',otherId));
         const ud = uSnap.data()||{};
         name = ud.name||'Пользователь';
         photo = ud.photoURL||'';
@@ -2254,7 +2254,7 @@ window.forwardMessage = async () => {
     `;
     item.onclick = () => forwardToChat(chat, msg);
     list.appendChild(item);
-  });
+  }
   
   openModal('forwardModal');
 };
@@ -3027,7 +3027,6 @@ window.startCall = async (type) => {
   peerConnection.ontrack = e => {
     if(type==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
     else { stopRingtone(); document.getElementById('callStatus').textContent = 'Соединено'; }
-  };
   };
 
   const offer = await peerConnection.createOffer();
