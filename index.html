@@ -2170,23 +2170,25 @@ window.showContextMenu = (e, msgId) => {
   e.stopPropagation();
   contextMenuMsgId = msgId;
   const menu = document.getElementById('msgContextMenu');
-  menu.style.left = e.pageX + 'px';
-  menu.style.top = e.pageY + 'px';
-  menu.classList.add('open');
+  const btn = e.target.closest('.msg-actions-btn');
+  const rect = btn.getBoundingClientRect();
 
   // Show/hide edit and delete options based on message ownership
   const msg = findMessageById(msgId);
-  console.log('Context menu for msg:', msgId, 'msg:', msg, 'currentUser:', currentUser?.uid);
   const isOwn = msg && msg.sender === currentUser.uid;
   const editItem = menu.querySelector('.edit-only');
   const deleteItem = menu.querySelector('.delete-only');
-  console.log('isOwn:', isOwn, 'editItem:', editItem, 'deleteItem:', deleteItem);
   if(editItem) {
     editItem.style.display = isOwn ? 'flex' : 'none';
   }
   if(deleteItem) {
     deleteItem.style.display = isOwn ? 'flex' : 'none';
   }
+
+  // Show menu first to get its height
+  menu.classList.add('open');
+  menu.style.left = rect.left + 'px';
+  menu.style.top = (rect.top - menu.offsetHeight - 8) + 'px';
 };
 
 function hideContextMenu() {
