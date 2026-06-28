@@ -1047,6 +1047,8 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
   onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-yTlSlnozIhdpp-0vfAoZK92PHUMf_jU",
@@ -1060,6 +1062,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 let recordTimeout = null;
 
@@ -2374,6 +2377,8 @@ window.uploadFile = async (input, type) => {
   const file = input.files[0];
   try {
     let dataUrl;
+    let useStorage = true; // Use Firebase Storage by default
+    
     if(type==='image') {
       let quality = 0.75, maxDim = 1280, attempts = 0;
       dataUrl = await compressImage(file, maxDim, quality);
@@ -2383,18 +2388,30 @@ window.uploadFile = async (input, type) => {
         dataUrl = await compressImage(file, maxDim, quality);
         attempts++;
       }
-      if(dataUrl.length > MAX_DOC_LEN) {
+      // For small images, still use base64 for simplicity
+      if(dataUrl.length < 200000) useStorage = false;
+      else if(dataUrl.length > MAX_DOC_LEN) {
         showToast('Фото слишком большое — выбери изображение поменьше', 'err', 'Файл слишком большой');
         input.value = ''; return;
       }
     } else {
-      dataUrl = await blobToBase64(file);
-      if(dataUrl.length > MAX_DOC_LEN) {
-        showToast(`Файл слишком большой — максимум ~${Math.round(MAX_DOC_LEN*0.7/1024)} КБ. Выбери файл поменьше`, 'err', 'Файл не отправлен');
-        input.value = ''; return;
-      }
+      // For videos and files, always use Storage
+      useStorage = true;
     }
-    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url:dataUrl};
+    
+    let url;
+    if(useStorage) {
+      // Upload to Firebase Storage
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `chats/${currentChatId}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      url = await getDownloadURL(snapshot.ref);
+    } else {
+      // Use base64 for small images
+      url = dataUrl;
+    }
+    
+    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url:url};
     if(type==='image') msgData.type = 'image';
     else if(type==='video') msgData.type = 'video';
     else { msgData.type = 'file'; msgData.fileName = file.name; }
@@ -2474,13 +2491,14 @@ window.toggleRecord = async () => {
         stream.getTracks().forEach(t=>t.stop());
         if(!currentChatId) return;
         try {
-          const dataUrl = await blobToBase64(blob);
-          if(dataUrl.length > MAX_DOC_LEN) {
-            showToast('Голосовое слишком длинное — запиши покороче (лимит ~' + Math.round(MAX_DOC_LEN*0.7/1024) + ' КБ)', 'err', 'Не отправлено');
-            return;
-          }
+          // Upload to Firebase Storage
+          const fileName = `${Date.now()}_voice.webm`;
+          const storageRef = ref(storage, `chats/${currentChatId}/${fileName}`);
+          const snapshot = await uploadBytes(storageRef, blob);
+          const url = await getDownloadURL(snapshot.ref);
+          
           await addDoc(collection(db,'chats',currentChatId,'messages'), {
-            type:'voice', url:dataUrl, sender:currentUser.uid, time:serverTimestamp()
+            type:'voice', url:url, sender:currentUser.uid, time:serverTimestamp()
           });
           await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'Голосовое сообщение', lastTime:serverTimestamp(), lastSender:currentUser.uid});
         } catch(e) {
@@ -3027,7 +3045,6 @@ window.startCall = async (type) => {
   peerConnection.ontrack = e => {
     if(type==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
     else { stopRingtone(); document.getElementById('callStatus').textContent = 'Соединено'; }
-  };
   };
 
   const offer = await peerConnection.createOffer();
