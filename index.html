@@ -2,7 +2,10 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Ysend</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
@@ -24,7 +27,7 @@
   --msg-in:#1e1e24;
   --radius:14px;
 }
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 
 /* ───── AUTH ───── */
 #authScreen{
@@ -1438,6 +1441,16 @@ async function enterApp() {
       try { await setDoc(doc(db,'users',currentUser.uid), {online:true, lastSeen: serverTimestamp()}, {merge:true}); } catch(e){}
     }
   });
+
+  // Request microphone permission on mobile devices for calls and voice messages
+  if('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+    try {
+      await navigator.mediaDevices.getUserMedia({audio:AUDIO_CONSTRAINTS});
+    } catch(e) {
+      console.log('Microphone permission not granted yet, will request when needed');
+    }
+  }
+
   listenChats();
   listenIncomingCalls();
   initNotifications();
@@ -1476,8 +1489,10 @@ async function initNotifications() {
   if('Notification' in window && Notification.permission === 'default') {
     const hasRequested = localStorage.getItem('notifPermissionRequested');
     if(!hasRequested) {
-      // Пытаемся запросить разрешение (может быть заблокировано браузером без клика)
+      // На мобильных устройствах запрос без клика может быть заблокирован
+      // Показываем кнопку для запроса разрешения
       try {
+        // Пытаемся запросить разрешение сразу
         const perm = await Notification.requestPermission();
         localStorage.setItem('notifPermissionRequested', 'true');
         if(perm === 'granted') {
@@ -1487,6 +1502,7 @@ async function initNotifications() {
         }
       } catch(e) {
         // Браузер заблокировал запрос без клика - пользователь должен нажать на колокольчик
+        console.log('Notification request blocked, waiting for user interaction');
       }
     }
   }
@@ -2547,7 +2563,12 @@ function renderThemeColorPicker(activeKey) {
     row.appendChild(sw);
   });
 }
-const AUDIO_CONSTRAINTS = {echoCancellation:true, noiseSuppression:true, autoGainControl:true};
+const AUDIO_CONSTRAINTS = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+  channelCount: 1
+};
 window.toggleRecord = async () => {
   if(!isRecording) {
     try {
@@ -3056,8 +3077,17 @@ window.answerCall = async () => {
   peerConnection = new RTCPeerConnection(iceConfig);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
   peerConnection.ontrack = e => {
-    if(callType==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
-    else document.getElementById('callStatus').textContent = 'Соединено';
+    console.log('Remote track received:', e.track.kind);
+    if(callType==='video') {
+      document.getElementById('remoteVideo').srcObject = e.streams[0];
+    } else {
+      // For audio calls, create audio element to play remote stream
+      const remoteAudio = new Audio();
+      remoteAudio.srcObject = e.streams[0];
+      remoteAudio.play();
+      remoteAudio.id = 'remoteAudio';
+      document.getElementById('callStatus').textContent = 'Соединено';
+    }
   };
   peerConnection.onicecandidate = e => {
     if(e.candidate) addDoc(collection(db,'calls',chatId,'calleeCandidates'), e.candidate.toJSON());
@@ -3116,8 +3146,18 @@ window.startCall = async (type) => {
   peerConnection = new RTCPeerConnection(iceConfig);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
   peerConnection.ontrack = e => {
-    if(type==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
-    else { stopRingtone(); document.getElementById('callStatus').textContent = 'Соединено'; }
+    console.log('Remote track received:', e.track.kind);
+    if(type==='video') {
+      document.getElementById('remoteVideo').srcObject = e.streams[0];
+    } else {
+      // For audio calls, create audio element to play remote stream
+      const remoteAudio = new Audio();
+      remoteAudio.srcObject = e.streams[0];
+      remoteAudio.play();
+      remoteAudio.id = 'remoteAudio';
+      stopRingtone();
+      document.getElementById('callStatus').textContent = 'Соединено';
+    }
   };
 
   const offer = await peerConnection.createOffer();
