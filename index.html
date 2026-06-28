@@ -59,7 +59,86 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .btn-primary:hover{opacity:.9}
 .btn-primary:active{transform:scale(.98)}
-.auth-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center;min-height:16px}
+.auth-err{font-size:13px;margin-top:12px;text-align:center;min-height:20px;font-weight:500;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;line-height:1.4}
+.auth-err:empty{display:none}
+.auth-err.is-error::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0}
+.auth-err.is-success::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.auth-err.is-info::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent2);flex-shrink:0}
+
+/* ───── TOAST ───── */
+#toastContainer{
+  position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9999;
+  display:flex;flex-direction:column;gap:10px;pointer-events:none;
+}
+.toast{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:14px;padding:14px 20px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 16px 40px rgba(0,0,0,.5);
+  font-size:14px;font-weight:600;color:#fff;
+  pointer-events:auto;min-width:280px;max-width:440px;
+  animation:toastIn .25s cubic-bezier(.34,1.56,.64,1);
+  white-space:pre-wrap;
+}
+.toast.toast-out{animation:toastOut .2s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px) scale(.96)}}
+.toast-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+.toast-icon.err{background:rgba(248,113,113,.15);color:var(--red)}
+.toast-icon.ok{background:rgba(52,211,153,.15);color:var(--green)}
+.toast-icon.info{background:rgba(167,139,250,.15);color:var(--accent2)}
+.toast-body{flex:1}
+.toast-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.toast-msg{font-size:12px;color:var(--text2);font-weight:500}
+
+/* ───── CONFIRM DIALOG ───── */
+#confirmOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  z-index:8000;display:none;align-items:center;justify-content:center;
+}
+#confirmOverlay.open{display:flex;animation:fadeIn .18s ease}
+.confirm-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:32px;width:360px;max-width:92vw;
+  box-shadow:0 30px 60px rgba(0,0,0,.6);text-align:center;
+}
+.confirm-icon{font-size:42px;margin-bottom:12px}
+.confirm-title{font-size:17px;font-weight:800;margin-bottom:8px}
+.confirm-msg{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.confirm-btns{display:flex;gap:10px}
+.confirm-btns button{flex:1;padding:12px;border-radius:12px;border:none;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.confirm-btns .btn-cancel{background:var(--surface2);color:var(--text2)}
+.confirm-btns .btn-cancel:hover{opacity:.8}
+.confirm-btns .btn-ok{background:var(--red);color:#fff}
+.confirm-btns .btn-ok.safe{background:var(--accent)}
+.confirm-btns .btn-ok:hover{opacity:.85}
+
+/* ───── PROMPT DIALOG ───── */
+#promptOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  z-index:8001;display:none;align-items:center;justify-content:center;
+}
+#promptOverlay.open{display:flex;animation:fadeIn .18s ease}
+.prompt-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:20px;padding:32px;width:360px;max-width:92vw;
+  box-shadow:0 30px 60px rgba(0,0,0,.6);text-align:center;
+}
+.prompt-card .prompt-icon{font-size:36px;margin-bottom:10px}
+.prompt-card h3{font-size:16px;font-weight:800;margin-bottom:6px}
+.prompt-card p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.prompt-card input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;color:var(--text);
+  font-family:'Syne',sans-serif;font-size:14px;outline:none;
+  transition:border-color .2s;margin-bottom:16px;
+}
+.prompt-card input:focus{border-color:var(--accent)}
+.prompt-card .prompt-btns{display:flex;gap:10px}
+.prompt-card .prompt-btns button{flex:1;padding:11px;border-radius:11px;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.prompt-card .prompt-btns .btn-cancel{background:var(--surface2);color:var(--text2)}
+.prompt-card .prompt-btns .btn-ok{background:var(--accent);color:#fff}
+.prompt-card .prompt-btns .btn-ok:hover{opacity:.85}
 
 /* ───── APP LAYOUT ───── */
 #app{display:none;height:100vh;flex-direction:row}
@@ -393,6 +472,34 @@ input[type=file]{display:none}
 <body>
 
 <!-- AUTH SCREEN -->
+<div id="toastContainer"></div>
+
+<div id="confirmOverlay">
+  <div class="confirm-card">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Подтвердите действие</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="confirmCancelBtn">Отмена</button>
+      <button class="btn-ok" id="confirmOkBtn">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<div id="promptOverlay">
+  <div class="prompt-card">
+    <div class="prompt-icon" id="promptIcon">🔒</div>
+    <h3 id="promptTitle">Введите значение</h3>
+    <p id="promptMsg"></p>
+    <input type="password" id="promptInput" placeholder=""/>
+    <div class="prompt-btns">
+      <button class="btn-cancel" id="promptCancelBtn">Отмена</button>
+      <button class="btn-ok" id="promptOkBtn">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="auth-card">
     <div class="auth-logo">Y<span>send</span></div>
@@ -722,6 +829,72 @@ return 'Эхо: ' + message;"></textarea>
   </div>
 </div>
 
+<!-- Toast & Dialog helpers -->
+<script>
+// ───── TOAST ─────
+function showToast(msg, type='info', title='') {
+  const icons = {err:'✕', ok:'✓', info:'ℹ'};
+  const titles = {err:'Ошибка', ok:'Готово', info:'Уведомление'};
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="toast-icon ${type}">${icons[type]||'ℹ'}</div>
+    <div class="toast-body">
+      <div class="toast-title">${title||titles[type]||''}</div>
+      <div class="toast-msg">${msg}</div>
+    </div>`;
+  c.appendChild(t);
+  setTimeout(()=>{
+    t.classList.add('toast-out');
+    setTimeout(()=>t.remove(), 220);
+  }, type==='err' ? 4500 : 3000);
+}
+
+// ───── CONFIRM ─────
+function showConfirm(msg, opts={}) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmIcon').textContent = opts.icon || '⚠️';
+    document.getElementById('confirmTitle').textContent = opts.title || 'Подтвердите действие';
+    document.getElementById('confirmMsg').textContent = msg;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = opts.okText || 'Продолжить';
+    okBtn.className = 'btn-ok' + (opts.safe ? ' safe' : '');
+    overlay.classList.add('open');
+    const done = (val) => { overlay.classList.remove('open'); resolve(val); };
+    okBtn.onclick = () => done(true);
+    document.getElementById('confirmCancelBtn').onclick = () => done(false);
+  });
+}
+
+// ───── PROMPT ─────
+function showPrompt(msg, opts={}) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('promptOverlay');
+    document.getElementById('promptIcon').textContent = opts.icon || '🔒';
+    document.getElementById('promptTitle').textContent = opts.title || 'Введите значение';
+    document.getElementById('promptMsg').textContent = msg;
+    const input = document.getElementById('promptInput');
+    input.type = opts.type || 'password';
+    input.placeholder = opts.placeholder || '';
+    input.value = '';
+    overlay.classList.add('open');
+    setTimeout(()=>input.focus(), 80);
+    const done = (val) => { overlay.classList.remove('open'); resolve(val); };
+    document.getElementById('promptOkBtn').onclick = () => done(input.value || null);
+    document.getElementById('promptCancelBtn').onclick = () => done(null);
+    input.onkeydown = (e) => { if(e.key==='Enter') done(input.value || null); if(e.key==='Escape') done(null); };
+  });
+}
+
+// ───── AUTH ERROR HELPER ─────
+function setAuthErr(msg, type='error') {
+  const el = document.getElementById('authErr');
+  el.textContent = msg;
+  el.className = 'auth-err' + (type==='success' ? ' is-success' : type==='info' ? ' is-info' : (msg ? ' is-error' : ''));
+}
+</script>
+
 <!-- EmailJS SDK (official) -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
@@ -786,7 +959,7 @@ if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
 async function sendVerificationEmail(toEmail, code) {
   if(EMAILJS_SERVICE_ID==='YOUR_SERVICE_ID' || !window.emailjs) {
     // Не настроено / SDK не загрузился — fallback, чтобы фичу можно было тестировать
-    alert('Email-сервис не настроен. Код для теста: ' + code);
+    showToast('Email-сервис не настроен. Код для теста: ' + code, 'info', 'Тестовый режим');
     return;
   }
   console.log('[EmailJS] отправка письма на', toEmail, 'с кодом', code);
@@ -816,7 +989,7 @@ window.switchTab = (tab) => {
   document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
   document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
 };
 
 window.doLogin = async () => {
@@ -825,7 +998,7 @@ window.doLogin = async () => {
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
-    document.getElementById('authErr').textContent = 'Неверный email или пароль';
+    setAuthErr('Неверный email или пароль — проверь данные и попробуй снова');
   }
 };
 
@@ -844,7 +1017,7 @@ window.openForgotPassword = () => {
   document.getElementById('forgotForm').style.display = 'block';
   document.getElementById('forgotResetForm').style.display = 'none';
   document.getElementById('authErr').style.color = '';
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
   document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value || '';
 };
 
@@ -853,7 +1026,7 @@ window.backToLoginFromForgot = () => {
   document.getElementById('forgotResetForm').style.display = 'none';
   document.querySelector('.auth-tabs').style.display = 'flex';
   document.getElementById('authErr').style.color = '';
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
   switchTab('login');
 };
 
@@ -862,11 +1035,11 @@ let forgotPasswordEmail = '';
 window.sendForgotPasswordEmail = async () => {
   const emailInput = document.getElementById('forgotEmail').value.trim();
   const email = emailInput || forgotPasswordEmail;
-  if(!email) { document.getElementById('authErr').textContent = 'Введи email'; return; }
+  if(!email) { setAuthErr('Укажи email, привязанный к аккаунту'); return; }
   forgotPasswordEmail = email;
   const errEl = document.getElementById('authErr');
   errEl.style.color = '';
-  errEl.textContent = 'Отправляем письмо...';
+  setAuthErr('Отправляем письмо...', 'info');
   try {
     await sendPasswordResetEmail(auth, email);
     document.getElementById('forgotForm').style.display = 'none';
@@ -875,11 +1048,9 @@ window.sendForgotPasswordEmail = async () => {
     document.getElementById('forgotCodeInput').value = '';
     document.getElementById('forgotNewPass').value = '';
     document.getElementById('forgotNewPass2').value = '';
-    errEl.style.color = 'var(--green)';
-    errEl.textContent = 'Письмо отправлено на ' + email + '. Открой его и вставь код (или всю ссылку) из письма в поле ниже.';
+    setAuthErr('Письмо отправлено на ' + email + '. Скопируй код или ссылку из письма.', 'success');
   } catch(e) {
-    errEl.style.color = '';
-    errEl.textContent = e.code==='auth/user-not-found' ? 'Аккаунт с такой почтой не найден' : ('Не удалось отправить письмо: ' + (e.message||e));
+    setAuthErr(e.code==='auth/user-not-found' ? 'Аккаунт с такой почтой не найден — проверь адрес' : 'Письмо не удалось отправить, попробуй позже');
   }
 };
 
@@ -896,20 +1067,18 @@ window.confirmForgotPassword = async () => {
   const pass1 = document.getElementById('forgotNewPass').value;
   const pass2 = document.getElementById('forgotNewPass2').value;
   errEl.style.color = '';
-  if(!codeRaw.trim()) { errEl.textContent = 'Вставь код из письма'; return; }
-  if(pass1.length < 6) { errEl.textContent = 'Пароль минимум 6 символов'; return; }
-  if(pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают, проверь ввод'; return; }
+  if(!codeRaw.trim()) { setAuthErr('Вставь код из письма — он нужен для проверки'); return; }
+  if(pass1.length < 6) { setAuthErr('Пароль слишком короткий — минимум 6 символов'); return; }
+  if(pass1 !== pass2) { setAuthErr('Пароли не совпадают — проверь оба поля'); return; }
   const code = extractResetCode(codeRaw);
-  errEl.textContent = 'Проверяем код...';
+  setAuthErr('Проверяем код...', 'info');
   try {
     await verifyPasswordResetCode(auth, code);
     await confirmPasswordReset(auth, code, pass1);
-    errEl.style.color = 'var(--green)';
-    errEl.textContent = 'Пароль изменён! Теперь можно войти с новым паролем.';
+    setAuthErr('Пароль изменён! Теперь можно войти с новым паролем.', 'success');
     setTimeout(backToLoginFromForgot, 1800);
   } catch(e) {
-    errEl.style.color = '';
-    errEl.textContent = e.code==='auth/invalid-action-code' ? 'Неверный или устаревший код — запроси новый' : ('Не удалось сменить пароль: ' + (e.message||e));
+    setAuthErr(e.code==='auth/invalid-action-code' ? 'Код недействителен или устарел — запроси письмо заново' : 'Не удалось сменить пароль, попробуй ещё раз');
   }
 };
 
@@ -917,7 +1086,7 @@ window.doRegister = async () => {
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const pass = document.getElementById('regPass').value;
-  if(!name){document.getElementById('authErr').textContent='Введи имя';return}
+  if(!name){setAuthErr('Введи своё имя — оно будет отображаться в чатах');return}
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, {displayName: name});
@@ -925,16 +1094,14 @@ window.doRegister = async () => {
       uid: cred.user.uid, name, email, photoURL:'', createdAt: serverTimestamp(),
       emailVerifiedCustom:false, blockedUsers:[]
     });
-    // Сразу шлём код и показываем экран подтверждения — войти в приложение
-    // можно только после ввода правильного кода.
     await startEmailVerificationFlow(email);
   } catch(e) {
-    document.getElementById('authErr').textContent = e.message.includes('email') ? 'Email уже занят' : 'Пароль минимум 6 символов';
+    setAuthErr(e.message.includes('email') ? 'Этот email уже используется другим аккаунтом' : 'Пароль должен быть не менее 6 символов');
   }
 };
 
 async function startEmailVerificationFlow(email) {
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('registerForm').style.display = 'none';
   document.querySelector('.auth-tabs').style.display = 'none';
@@ -948,7 +1115,7 @@ window.backToAuthScreen = async () => {
   pendingEmailCode = null;
   document.getElementById('verifyForm').style.display = 'none';
   document.querySelector('.auth-tabs').style.display = 'flex';
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
   switchTab('login');
   if(currentUser) {
     const uid = currentUser.uid;
@@ -980,25 +1147,23 @@ window.resendRegisterCode = async () => {
   pendingEmailCode = {code, expires: Date.now() + 10*60*1000};
   const errEl = document.getElementById('authErr');
   errEl.style.color = '';
-  errEl.textContent = 'Отправляем код...';
+  setAuthErr('Отправляем код...', 'info');
   try {
     await sendVerificationEmail(email, code);
-    errEl.style.color = 'var(--green)';
-    errEl.textContent = 'Код отправлен на ' + email + '. Если письма нет в течение минуты — проверь "Спам" или см. инструкцию в чате.';
+    setAuthErr('Код отправлен на ' + email + '. Если письма нет — проверь папку «Спам».', 'success');
   } catch(e) {
-    errEl.style.color = '';
-    errEl.textContent = e.message||'Не удалось отправить код';
+    setAuthErr(e.message||'Не удалось отправить код — попробуй чуть позже');
   }
 };
 
 window.confirmRegisterCode = async () => {
   const input = document.getElementById('verifyCodeInput').value.trim();
-  if(!pendingEmailCode) { document.getElementById('authErr').textContent = 'Сначала запроси код'; return; }
-  if(Date.now() > pendingEmailCode.expires) { document.getElementById('authErr').textContent = 'Код устарел, запроси новый'; return; }
-  if(input !== pendingEmailCode.code) { document.getElementById('authErr').textContent = 'Неверный код'; return; }
+  if(!pendingEmailCode) { setAuthErr('Сначала запроси код — нажми «Отправить код ещё раз»'); return; }
+  if(Date.now() > pendingEmailCode.expires) { setAuthErr('Код устарел — запроси новый письмо'); return; }
+  if(input !== pendingEmailCode.code) { setAuthErr('Неверный код — проверь письмо и попробуй снова'); return; }
   await updateDoc(doc(db,'users',currentUser.uid), {emailVerifiedCustom:true});
   pendingEmailCode = null;
-  document.getElementById('authErr').textContent = '';
+  setAuthErr('');
   document.querySelector('.auth-tabs').style.display = 'flex';
   document.getElementById('verifyForm').style.display = 'none';
   enterApp();
@@ -1016,11 +1181,15 @@ window.doLogout = async () => {
 
 window.deleteMyAccount = async () => {
   if(!currentUser) return;
-  if(!confirm('Аккаунт и все твои данные будут удалены навсегда, восстановить их нельзя. Точно продолжить?')) return;
-  const password = prompt('Для подтверждения введи свой пароль:');
+  const ok = await showConfirm('Аккаунт и все твои данные будут удалены навсегда. Это действие нельзя отменить.', {
+    icon:'🗑️', title:'Удалить аккаунт?', okText:'Удалить навсегда'
+  });
+  if(!ok) return;
+  const password = await showPrompt('Введи свой пароль для подтверждения:', {
+    icon:'🔒', title:'Подтверждение', placeholder:'Твой пароль'
+  });
   if(!password) return;
   try {
-    // Firebase требует "свежую" авторизацию перед удалением аккаунта
     const cred = EmailAuthProvider.credential(currentUser.email, password);
     await reauthenticateWithCredential(currentUser, cred);
 
@@ -1033,12 +1202,12 @@ window.deleteMyAccount = async () => {
     await deleteUser(currentUser);
 
     closeModal('profileModal');
-    alert('Аккаунт удалён.');
+    showToast('Аккаунт удалён', 'ok');
   } catch(e) {
     if(e.code==='auth/wrong-password' || e.code==='auth/invalid-credential') {
-      alert('Неверный пароль.');
+      showToast('Неверный пароль — аккаунт не удалён', 'err');
     } else {
-      alert('Не удалось удалить аккаунт: ' + (e.message||e));
+      showToast('Не удалось удалить аккаунт', 'err');
     }
   }
 };
@@ -1095,7 +1264,7 @@ window.toggleNotifications = async () => {
   if(!notificationsEnabled) {
     if('Notification' in window && Notification.permission!=='granted') {
       const perm = await Notification.requestPermission();
-      if(perm!=='granted') { alert('Уведомления не разрешены в браузере'); return; }
+      if(perm!=='granted') { showToast('Уведомления не разрешены в браузере — разреши их в настройках', 'err'); return; }
     }
     notificationsEnabled = true;
   } else {
@@ -1165,16 +1334,16 @@ window.sendEmailCode = async () => {
     document.getElementById('emailVerifyBtn').textContent = 'Отправить снова';
   } catch(e) {
     console.error(e);
-    alert('Не удалось отправить код: ' + (e.message||e));
+    showToast('Не удалось отправить код — попробуй позже', 'err');
     document.getElementById('emailVerifyBtn').textContent = 'Подтвердить';
   }
 };
 
 window.confirmEmailCode = async () => {
   const input = document.getElementById('emailCodeInput').value.trim();
-  if(!pendingEmailCode) { alert('Сначала запроси код'); return; }
-  if(Date.now() > pendingEmailCode.expires) { alert('Код устарел, запроси новый'); return; }
-  if(input !== pendingEmailCode.code) { alert('Неверный код'); return; }
+  if(!pendingEmailCode) { showToast('Сначала запроси код по кнопке «Подтвердить»', 'info'); return; }
+  if(Date.now() > pendingEmailCode.expires) { showToast('Код устарел — запроси новый', 'err'); return; }
+  if(input !== pendingEmailCode.code) { showToast('Неверный код — проверь письмо', 'err'); return; }
   await updateDoc(doc(db,'users',currentUser.uid), {emailVerifiedCustom:true});
   pendingEmailCode = null;
   document.getElementById('emailCodeRow').style.display = 'none';
@@ -1198,7 +1367,7 @@ window.uploadAvatar = async (input) => {
     loadMyProfile();
   } catch(e) {
     console.error(e);
-    alert('Не удалось загрузить аватар: ' + e.message);
+    showToast('Не удалось загрузить аватар: ' + e.message, 'err');
   }
   input.value = '';
 };
@@ -1675,13 +1844,13 @@ window.uploadFile = async (input, type) => {
         attempts++;
       }
       if(dataUrl.length > MAX_DOC_LEN) {
-        alert('Фото слишком большое даже после сжатия. Выбери другое изображение.');
+        showToast('Фото слишком большое — выбери изображение поменьше', 'err', 'Файл слишком большой');
         input.value = ''; return;
       }
     } else {
       dataUrl = await blobToBase64(file);
       if(dataUrl.length > MAX_DOC_LEN) {
-        alert(`Файл слишком большой (лимит ~${Math.round(MAX_DOC_LEN*0.7/1024)} КБ без подключения платного облачного хранилища). Выбери файл меньшего размера.`);
+        showToast(`Файл слишком большой — максимум ~${Math.round(MAX_DOC_LEN*0.7/1024)} КБ. Выбери файл поменьше`, 'err', 'Файл не отправлен');
         input.value = ''; return;
       }
     }
@@ -1695,7 +1864,7 @@ window.uploadFile = async (input, type) => {
     });
   } catch(e) {
     console.error(e);
-    alert('Не удалось отправить файл: ' + (e.message||e));
+    showToast('Не удалось отправить файл — попробуй ещё раз', 'err');
   }
   input.value = '';
 };
@@ -1767,7 +1936,7 @@ window.toggleRecord = async () => {
         try {
           const dataUrl = await blobToBase64(blob);
           if(dataUrl.length > MAX_DOC_LEN) {
-            alert('Голосовое сообщение слишком длинное (лимит ~' + Math.round(MAX_DOC_LEN*0.7/1024) + ' КБ). Запиши покороче.');
+            showToast('Голосовое слишком длинное — запиши покороче (лимит ~' + Math.round(MAX_DOC_LEN*0.7/1024) + ' КБ)', 'err', 'Не отправлено');
             return;
           }
           await addDoc(collection(db,'chats',currentChatId,'messages'), {
@@ -1776,14 +1945,14 @@ window.toggleRecord = async () => {
           await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'Голосовое сообщение', lastTime:serverTimestamp(), lastSender:currentUser.uid});
         } catch(e) {
           console.error(e);
-          alert('Не удалось отправить голосовое: ' + (e.message||e));
+          showToast('Не удалось отправить голосовое — попробуй ещё раз', 'err');
         }
       };
       mediaRecorder.start();
       isRecording = true;
       document.getElementById('recordBtn').classList.add('recording');
       document.getElementById('recordBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>';
-    } catch(e) { alert('Нет доступа к микрофону'); }
+    } catch(e) { showToast('Нет доступа к микрофону — разреши в настройках браузера', 'err'); }
   } else {
     mediaRecorder.stop();
     isRecording = false;
@@ -1857,7 +2026,7 @@ window.previewBotAvatar = async (input) => {
     newBotAvatarData = dataUrl;
     document.getElementById('botAvatarWrap').innerHTML = `<img src="${dataUrl}"/>`;
   } catch(e) {
-    alert('Не удалось загрузить аватар: ' + e.message);
+    showToast('Не удалось загрузить аватар: ' + e.message, 'err');
   }
   input.value = '';
 };
@@ -1865,12 +2034,12 @@ window.previewBotAvatar = async (input) => {
 window.createBot = async () => {
   const name = document.getElementById('botName').value.trim();
   const script = document.getElementById('botScript').value.trim();
-  if(!name) { alert('Введи имя бота'); return; }
-  if(!script) { alert('Напиши хотя бы простую логику для бота'); return; }
+  if(!name) { showToast('Придумай имя для бота', 'err', 'Нет имени'); return; }
+  if(!script) { showToast('Напиши хотя бы простую логику для бота', 'err', 'Нет логики'); return; }
   try {
-    new Function('message', script); // проверяем, что код хотя бы синтаксически валиден
+    new Function('message', script);
   } catch(e) {
-    alert('Ошибка в коде бота: ' + e.message);
+    showToast('Синтаксическая ошибка в коде: ' + e.message, 'err', 'Ошибка кода');
     return;
   }
   const chatRef = await addDoc(collection(db,'chats'), {
@@ -1905,7 +2074,7 @@ window.uploadEditBotAvatar = async (input) => {
     editBotAvatarData = dataUrl;
     document.getElementById('editBotAvatarWrap').innerHTML = `<img src="${dataUrl}"/>`;
   } catch(e) {
-    alert('Не удалось загрузить аватар: ' + e.message);
+    showToast('Не удалось загрузить аватар: ' + e.message, 'err');
   }
   input.value = '';
 };
@@ -1918,7 +2087,7 @@ window.saveEditBot = async () => {
   try {
     new Function('message', script);
   } catch(e) {
-    alert('Ошибка в коде бота: ' + e.message);
+    showToast('Синтаксическая ошибка в коде: ' + e.message, 'err', 'Ошибка кода');
     return;
   }
   const update = {name, botScript:script};
@@ -1936,7 +2105,10 @@ window.saveEditBot = async () => {
 
 window.deleteBot = async () => {
   if(!editBotChatId) return;
-  if(!confirm('Удалить этого бота и всю переписку с ним навсегда?')) return;
+  const ok = await showConfirm('Бот и вся переписка с ним будут удалены навсегда.', {
+    icon:'🤖', title:'Удалить бота?', okText:'Удалить'
+  });
+  if(!ok) return;
   // удаляем все сообщения, затем сам чат-бот
   const msgsSnap = await getDocs(collection(db,'chats',editBotChatId,'messages'));
   await Promise.all(msgsSnap.docs.map(d => deleteDoc(doc(db,'chats',editBotChatId,'messages',d.id))));
@@ -1989,7 +2161,7 @@ window.removeGroupMember = (uid, el) => {
 window.createGroup = async () => {
   const name = document.getElementById('groupName').value.trim();
   if(!name) return;
-  if(selectedGroupMembers.length === 0) { alert('Добавь участников'); return; }
+  if(selectedGroupMembers.length === 0) { showToast('Добавь хотя бы одного участника в группу', 'err', 'Пустая группа'); return; }
   const members = [currentUser.uid, ...selectedGroupMembers.map(m=>m.uid)];
   const chatRef = await addDoc(collection(db,'chats'), {
     type:'group', name, description:'', photoURL:'', members, admins:[], lastMsg:'', lastTime:serverTimestamp(),
@@ -2074,7 +2246,7 @@ window.uploadGroupAvatar = async (input) => {
     }
   } catch(e) {
     console.error(e);
-    alert('Не удалось загрузить аватар: ' + e.message);
+    showToast('Не удалось загрузить аватар: ' + e.message, 'err');
   }
   input.value = '';
 };
@@ -2099,7 +2271,10 @@ window.toggleGroupAdmin = async (uid, makeAdmin) => {
 };
 
 window.kickGroupMember = async (uid) => {
-  if(!confirm('Удалить этого участника из группы?')) return;
+  const ok = await showConfirm('Участник будет удалён из группы и больше не сможет видеть новые сообщения.', {
+    icon:'👤', title:'Удалить участника?', okText:'Удалить'
+  });
+  if(!ok) return;
   const snap = await getDoc(doc(db,'chats',groupSettingsChatId));
   const g = snap.data();
   const members = (g.members||[]).filter(m=>m!==uid);
@@ -2189,7 +2364,7 @@ window.answerCall = async () => {
       callType==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
     if(callType==='video') document.getElementById('localVideo').srcObject = localStream;
-  } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
+  } catch(e) { showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err'); cleanupCall(); return; }
 
   peerConnection = new RTCPeerConnection(iceConfig);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
@@ -2248,7 +2423,7 @@ window.startCall = async (type) => {
       type==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
     if(type==='video') document.getElementById('localVideo').srcObject = localStream;
-  } catch(e) { alert('Нет доступа к камере/микрофону'); cleanupCall(); return; }
+  } catch(e) { showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err'); cleanupCall(); return; }
 
   peerConnection = new RTCPeerConnection(iceConfig);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
