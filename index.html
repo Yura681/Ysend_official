@@ -264,6 +264,24 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   box-shadow:0 30px 60px rgba(0,0,0,.5);
 }
 .modal.modal-wide{width:640px;max-width:92vw}
+.modal.modal-code{width:860px;max-width:94vw;text-align:left}
+.code-editor-wrap{
+  background:#0d1117;border:1px solid #30363d;border-radius:10px;overflow:hidden;
+}
+.code-editor-bar{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;background:#161b22;
+  border-bottom:1px solid #30363d;font-size:12px;color:#8b949e;font-family:'JetBrains Mono',monospace;
+}
+.code-editor-bar .dot{width:11px;height:11px;border-radius:50%}
+.code-editor-bar .dot.r{background:#ff5f56}
+.code-editor-bar .dot.y{background:#ffbd2e}
+.code-editor-bar .dot.g{background:#27c93f}
+.code-editor-wrap textarea{
+  width:100%;background:#0d1117;color:#c9d1d9;border:none;outline:none;
+  font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.6;padding:16px;
+  resize:vertical;min-height:320px;tab-size:2;
+}
+.code-editor-wrap textarea::placeholder{color:#6e7681}
 .modal h2{font-size:18px;font-weight:800;margin-bottom:20px}
 .modal-close{
   float:right;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;margin-top:-4px;
@@ -507,7 +525,7 @@ input[type=file]{display:none}
 
 <!-- NEW BOT MODAL -->
 <div class="modal-bg" id="newBotModal">
-  <div class="modal modal-wide">
+  <div class="modal modal-code">
     <button class="modal-close" onclick="closeModal('newBotModal')">✕</button>
     <h2>Создать бота</h2>
     <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
@@ -519,12 +537,20 @@ input[type=file]{display:none}
           <input type="text" id="botName" placeholder="Помощник" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
         </div>
       </div>
-      <div style="flex:1;min-width:280px;text-align:left">
-        <div class="field" style="text-align:left;margin-bottom:0">
-          <label>Логика бота (JavaScript)</label>
-          <textarea id="botScript" rows="14" placeholder="// переменная message — текст от пользователя&#10;// верни строку — это будет ответ бота&#10;if(message.toLowerCase().includes('привет')) return 'Привет! Как дела?';&#10;return 'Эхо: ' + message;" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;line-height:1.5;outline:none;resize:vertical"></textarea>
-          <div style="font-size:12px;color:var(--text3);margin-top:6px">Пиши обычный JS. Доступна переменная <code>message</code> (текст пользователя). Верни строку — бот её отправит. Можно async/await и fetch к открытым API.</div>
+      <div style="flex:1;min-width:380px;text-align:left">
+        <label style="font-size:12px;color:var(--text2);font-weight:700;display:block;margin-bottom:6px">Логика бота (JavaScript) · bot.js</label>
+        <div class="code-editor-wrap">
+          <div class="code-editor-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span style="margin-left:6px">bot.js</span></div>
+          <textarea id="botScript" spellcheck="false" placeholder="// переменная message — текст от пользователя
+// верни строку — это будет ответ бота
+
+if (message.toLowerCase().includes('привет')) {
+  return 'Привет! Как дела?';
+}
+
+return 'Эхо: ' + message;"></textarea>
         </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px">Обычный JS. Доступна переменная <code>message</code> (текст пользователя). Верни строку — бот её отправит. Можно async/await и fetch к открытым API.</div>
       </div>
     </div>
     <button class="btn-primary" style="margin-top:18px" onclick="createBot()">Создать бота</button>
@@ -550,7 +576,7 @@ input[type=file]{display:none}
 
 <!-- EDIT BOT MODAL -->
 <div class="modal-bg" id="editBotModal">
-  <div class="modal modal-wide">
+  <div class="modal modal-code">
     <button class="modal-close" onclick="closeModal('editBotModal')">✕</button>
     <h2>Бот</h2>
     <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
@@ -561,11 +587,13 @@ input[type=file]{display:none}
           <label>Имя бота</label>
           <input type="text" id="editBotName" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none"/>
         </div>
+        <button class="icon-btn" style="width:auto;padding:8px 12px;color:var(--red);margin-top:10px;font-size:12px;font-weight:700" onclick="deleteBot()">🗑 Удалить бота</button>
       </div>
-      <div style="flex:1;min-width:280px;text-align:left">
-        <div class="field" style="text-align:left;margin-bottom:0">
-          <label>Логика бота (JavaScript)</label>
-          <textarea id="editBotScript" rows="14" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-family:'Fira Code',monospace;font-size:13px;line-height:1.5;outline:none;resize:vertical"></textarea>
+      <div style="flex:1;min-width:380px;text-align:left">
+        <label style="font-size:12px;color:var(--text2);font-weight:700;display:block;margin-bottom:6px">Логика бота (JavaScript) · bot.js</label>
+        <div class="code-editor-wrap">
+          <div class="code-editor-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span style="margin-left:6px">bot.js</span></div>
+          <textarea id="editBotScript" spellcheck="false"></textarea>
         </div>
       </div>
     </div>
@@ -702,9 +730,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Применяем сохранённую тему сразу, до входа — чтобы и экран логина/регистрации был в выбранном цвете
-applyThemeColor(localStorage.getItem('themeColor') || 'violet');
-
 let recordTimeout = null;
 
 let currentUser = null;
@@ -749,7 +774,7 @@ async function sendVerificationEmail(toEmail, code) {
   try {
     const res = await window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
       to_email: toEmail,   // должно совпадать с переменной в поле "To Email" шаблона
-      email: toEmail,      // дубль на случай, если в шаблоне переменная названа просто "email" без to_
+      email: toEmail,      // дубль на случай, если в шаблоне переменная названа просто {{email}}
       to_name: toEmail,
       code, message: code, passcode: code // дубли на случай других имён переменной в шаблоне
     });
@@ -759,7 +784,7 @@ async function sendVerificationEmail(toEmail, code) {
     // Частые причины:
     // 1) Сайт открыт как file:// — нужно включить в EmailJS:
     //    Account → Security → "Allow EmailJS API for non-browser applications"
-    // 2) В шаблоне письма поле "To Email" не привязано к переменной to_email, а
+    // 2) В шаблоне письма поле "To Email" не привязано к {{to_email}}, а
     //    содержит твою собственную почту — тогда письмо реально уходит,
     //    но не туда, куда нужно.
     // 3) Email-сервис (Gmail) отключился — Email Services → проверить статус "Connected".
@@ -1589,6 +1614,9 @@ function applyThemeColor(key) {
   document.documentElement.style.setProperty('--msg-out', t.msgOut);
 }
 
+// Применяем сохранённую тему сразу, до входа — чтобы и экран логина/регистрации был в выбранном цвете
+applyThemeColor(localStorage.getItem('themeColor') || 'violet');
+
 async function loadThemeColor() {
   let key = localStorage.getItem('themeColor');
   try {
@@ -1801,6 +1829,22 @@ window.saveEditBot = async () => {
     if(editBotAvatarData) currentChatData.photoURL = editBotAvatarData;
   }
   closeModal('editBotModal');
+};
+
+window.deleteBot = async () => {
+  if(!editBotChatId) return;
+  if(!confirm('Удалить этого бота и всю переписку с ним навсегда?')) return;
+  // удаляем все сообщения, затем сам чат-бот
+  const msgsSnap = await getDocs(collection(db,'chats',editBotChatId,'messages'));
+  await Promise.all(msgsSnap.docs.map(d => deleteDoc(doc(db,'chats',editBotChatId,'messages',d.id))));
+  await deleteDoc(doc(db,'chats',editBotChatId));
+  closeModal('editBotModal');
+  if(currentChatId===editBotChatId) {
+    currentChatId = null;
+    currentChatData = null;
+    document.getElementById('chatArea').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'flex';
+  }
 };
 
 window.searchGroupUsers = async (val) => {
