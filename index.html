@@ -2186,19 +2186,20 @@ window.editMessage = async () => {
   const msg = findMessageById(contextMenuMsgId);
   if(!msg || msg.sender !== currentUser.uid) return;
   if(msg.type !== 'text') { showToast('Можно редактировать только текстовые сообщения', 'info'); return; }
-  
+
+  const msgId = contextMenuMsgId; // Store ID before clearing
   hideContextMenu();
-  
+
   const newText = await showPrompt('Введите новый текст сообщения:', {
     icon: '✎',
     title: 'Редактировать сообщение',
     placeholder: msg.text
   });
-  
+
   if(!newText || newText.trim() === '') return;
-  
+
   try {
-    await updateDoc(doc(db,'chats',currentChatId,'messages',contextMenuMsgId), {
+    await updateDoc(doc(db,'chats',currentChatId,'messages',msgId), {
       text: newText.trim(),
       edited: true
     });
@@ -2217,15 +2218,16 @@ window.deleteMessage = async () => {
     okText: 'Удалить'
   });
   if(!ok) return;
-  
+
+  const msgId = contextMenuMsgId; // Store ID before clearing
   hideContextMenu();
-  
+
   try {
-    await deleteDoc(doc(db,'chats',currentChatId,'messages',contextMenuMsgId));
+    await deleteDoc(doc(db,'chats',currentChatId,'messages',msgId));
     showToast('Сообщение удалено', 'ok');
   } catch(e) {
     console.error(e);
-    showToast('Не удалось удалить сообщение', 'err');
+    showToast('Не удалось удалить сообщение: ' + e.message, 'err');
   }
 };
 
