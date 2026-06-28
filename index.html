@@ -471,11 +471,11 @@ input[type=file]{display:none}
 
 /* ───── MESSAGE ACTIONS ───── */
 .msg-actions-btn{
-  position:absolute;top:4px;left:4px;width:28px;height:28px;
+  width:28px;height:28px;
   border-radius:8px;background:var(--surface2);border:1px solid var(--border);
   color:var(--accent2);cursor:pointer;display:none;align-items:center;
   justify-content:center;transition:all .2s;font-size:14px;
-  backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);flex-shrink:0;
 }
 .msg-row:hover .msg-actions-btn{display:flex}
 .msg-actions-btn:hover{
@@ -1966,13 +1966,14 @@ async function renderMessages(msgs) {
     }
 
     row.innerHTML = `
+      ${!isOut?`<button class="msg-actions-btn" onclick="showContextMenu(event,'${msg.id}')">⋮</button>`:''}
       ${!isOut?`<div class="msg-avatar">${ud.photoURL?`<img src="${ud.photoURL}"/>`:(ud.name||'?')[0].toUpperCase()}</div>`:''}
       <div style="position:relative">
-        <button class="msg-actions-btn" onclick="showContextMenu(event,'${msg.id}')">⋮</button>
         ${!isOut&&currentChatType==='group'?`<div style="font-size:11px;color:var(--accent2);margin-bottom:4px;font-weight:600">${ud.name||'?'}</div>`:''}
         ${content}
         <div class="msg-time">${formatTime(msg.time)}${readStatus}</div>
-      </div>`;
+      </div>
+      ${isOut?`<button class="msg-actions-btn" onclick="showContextMenu(event,'${msg.id}')">⋮</button>`:''}`;
     area.appendChild(row);
   }
   area.scrollTop = area.scrollHeight;
