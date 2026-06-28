@@ -1442,15 +1442,6 @@ async function enterApp() {
     }
   });
 
-  // Request microphone permission on mobile devices for calls and voice messages
-  if('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
-    try {
-      await navigator.mediaDevices.getUserMedia({audio:AUDIO_CONSTRAINTS});
-    } catch(e) {
-      console.log('Microphone permission not granted yet, will request when needed');
-    }
-  }
-
   listenChats();
   listenIncomingCalls();
   initNotifications();
@@ -2563,11 +2554,20 @@ function renderThemeColorPicker(activeKey) {
     row.appendChild(sw);
   });
 }
-const AUDIO_CONSTRAINTS = {
+// Detect mobile device for audio constraints
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+const AUDIO_CONSTRAINTS = isMobile ? {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true
+} : {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  channelCount: 1
+  channelCount: 1,
+  sampleRate: 44100,
+  sampleSize: 16
 };
 window.toggleRecord = async () => {
   if(!isRecording) {
@@ -3057,6 +3057,17 @@ window.answerCall = async () => {
   const callData = callSnap.data();
   if(!callData) return;
 
+  // Request microphone permission immediately on answer button click (user interaction)
+  try {
+    console.log('Pre-requesting microphone permission...');
+    await navigator.mediaDevices.getUserMedia({audio:AUDIO_CONSTRAINTS});
+    console.log('Microphone permission granted');
+  } catch(e) {
+    console.error('Microphone permission denied:', e);
+    showToast('Нет доступа к микрофону — разреши в настройках браузера', 'err');
+    return;
+  }
+
   if(callType==='video') document.getElementById('videoCallScreen').classList.add('active');
   else {
     document.getElementById('callScreen').classList.add('active');
@@ -3068,24 +3079,35 @@ window.answerCall = async () => {
   }
 
   try {
+    console.log('Requesting media stream with constraints:', AUDIO_CONSTRAINTS);
     localStream = await navigator.mediaDevices.getUserMedia(
       callType==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
+    console.log('Media stream obtained, tracks:', localStream.getTracks().length);
     if(callType==='video') document.getElementById('localVideo').srcObject = localStream;
-  } catch(e) { showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err'); cleanupCall(); return; }
+  } catch(e) {
+    console.error('Media stream error:', e);
+    showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err');
+    cleanupCall();
+    return;
+  }
 
   peerConnection = new RTCPeerConnection(iceConfig);
-  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+  localStream.getTracks().forEach(t => {
+    console.log('Adding local track:', t.kind, 'enabled:', t.enabled);
+    peerConnection.addTrack(t, localStream);
+  });
   peerConnection.ontrack = e => {
-    console.log('Remote track received:', e.track.kind);
+    console.log('Remote track received:', e.track.kind, 'enabled:', e.track.enabled);
     if(callType==='video') {
       document.getElementById('remoteVideo').srcObject = e.streams[0];
     } else {
       // For audio calls, create audio element to play remote stream
       const remoteAudio = new Audio();
       remoteAudio.srcObject = e.streams[0];
-      remoteAudio.play();
+      remoteAudio.autoplay = true;
       remoteAudio.id = 'remoteAudio';
+      remoteAudio.play().catch(err => console.error('Audio play error:', err));
       document.getElementById('callStatus').textContent = 'Соединено';
     }
   };
@@ -3125,6 +3147,17 @@ window.startCall = async (type) => {
   const uSnap = await getDoc(doc(db,'users',otherId));
   const ud = uSnap.data()||{};
 
+  // Request microphone permission immediately on button click (user interaction)
+  try {
+    console.log('Pre-requesting microphone permission...');
+    await navigator.mediaDevices.getUserMedia({audio:AUDIO_CONSTRAINTS});
+    console.log('Microphone permission granted');
+  } catch(e) {
+    console.error('Microphone permission denied:', e);
+    showToast('Нет доступа к микрофону — разреши в настройках браузера', 'err');
+    return;
+  }
+
   if(type==='video') {
     document.getElementById('videoCallScreen').classList.add('active');
   } else {
@@ -3137,24 +3170,35 @@ window.startCall = async (type) => {
   }
 
   try {
+    console.log('Requesting media stream with constraints:', AUDIO_CONSTRAINTS);
     localStream = await navigator.mediaDevices.getUserMedia(
       type==='video' ? {video:true,audio:AUDIO_CONSTRAINTS} : {audio:AUDIO_CONSTRAINTS}
     );
+    console.log('Media stream obtained, tracks:', localStream.getTracks().length);
     if(type==='video') document.getElementById('localVideo').srcObject = localStream;
-  } catch(e) { showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err'); cleanupCall(); return; }
+  } catch(e) {
+    console.error('Media stream error:', e);
+    showToast('Нет доступа к камере или микрофону — разреши в браузере', 'err');
+    cleanupCall();
+    return;
+  }
 
   peerConnection = new RTCPeerConnection(iceConfig);
-  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+  localStream.getTracks().forEach(t => {
+    console.log('Adding local track:', t.kind, 'enabled:', t.enabled);
+    peerConnection.addTrack(t, localStream);
+  });
   peerConnection.ontrack = e => {
-    console.log('Remote track received:', e.track.kind);
+    console.log('Remote track received:', e.track.kind, 'enabled:', e.track.enabled);
     if(type==='video') {
       document.getElementById('remoteVideo').srcObject = e.streams[0];
     } else {
       // For audio calls, create audio element to play remote stream
       const remoteAudio = new Audio();
       remoteAudio.srcObject = e.streams[0];
-      remoteAudio.play();
+      remoteAudio.autoplay = true;
       remoteAudio.id = 'remoteAudio';
+      remoteAudio.play().catch(err => console.error('Audio play error:', err));
       stopRingtone();
       document.getElementById('callStatus').textContent = 'Соединено';
     }
