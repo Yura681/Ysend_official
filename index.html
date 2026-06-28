@@ -1449,11 +1449,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     const snap = await getDoc(doc(db,'users',user.uid));
     const data = snap.data()||{};
-    if(!data.emailVerifiedCustom) {
-      // Почта ещё не подтверждена — показываем экран с кодом и не пускаем в приложение
-      await startEmailVerificationFlow(user.email);
-      return;
-    }
+    // Убрали проверку emailVerifiedCustom - теперь можно входить без повторного кода
     await enterApp();
   } else {
     currentUser = null;
