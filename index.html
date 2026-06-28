@@ -471,81 +471,53 @@ input[type=file]{display:none}
 
 /* ───── MESSAGE ACTIONS ───── */
 .msg-actions-btn{
-  position:absolute;top:4px;left:4px;width:28px;height:28px;
-  border-radius:8px;background:var(--surface2);border:1px solid var(--border);
-  color:var(--accent2);cursor:pointer;display:none;align-items:center;
+  position:absolute;top:4px;right:4px;width:28px;height:28px;
+  border-radius:50%;background:var(--surface3);border:none;
+  color:var(--text2);cursor:pointer;display:none;align-items:center;
   justify-content:center;transition:all .2s;font-size:14px;
-  backdrop-filter:blur(8px);
 }
 .msg-row:hover .msg-actions-btn{display:flex}
-.msg-actions-btn:hover{
-  background:var(--accent);color:#fff;border-color:var(--accent);
-  transform:scale(1.1);
-}
+.msg-actions-btn:hover{background:var(--accent);color:#fff}
 
 /* CONTEXT MENU */
 .msg-context-menu{
   position:absolute;background:var(--surface2);border:1px solid var(--border);
-  border-radius:12px;padding:4px;min-width:160px;box-shadow:0 15px 40px rgba(0,0,0,0.5);
-  z-index:100;display:none;backdrop-filter:blur(12px);
+  border-radius:10px;padding:6px;min-width:140px;box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  z-index:100;display:none;
 }
 .msg-context-menu.open{display:block}
 .msg-context-item{
-  padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;
-  display:flex;align-items:center;gap:10px;color:var(--text);transition:all .15s;
-  font-weight:500;
+  padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;gap:8px;color:var(--text);transition:background .15s;
 }
-.msg-context-item:hover{
-  background:var(--surface3);
-  transform:translateX(2px);
-}
-.msg-context-item svg{
-  width:16px;height:16px;color:var(--accent2);
-}
-.msg-context-item:hover svg{
-  color:var(--accent);
-}
+.msg-context-item:hover{background:var(--surface3)}
 .msg-context-item.danger{color:var(--red)}
-.msg-context-item.danger svg{color:var(--red)}
-.msg-context-item.danger:hover svg{color:var(--red)}
 
 /* REACTIONS */
 .msg-reactions{
   display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;
 }
 .reaction-badge{
-  background:var(--surface3);border-radius:18px;padding:3px 10px;
+  background:var(--surface3);border-radius:16px;padding:2px 8px;
   font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer;
   border:1px solid var(--border);transition:all .15s;
-  backdrop-filter:blur(8px);
 }
-.reaction-badge:hover{
-  background:var(--surface2);
-  transform:scale(1.05);
-}
-.reaction-badge.own{
-  border-color:var(--accent);
-  background:rgba(124,106,247,0.15);
-}
+.reaction-badge:hover{background:var(--surface2)}
+.reaction-badge.own{border-color:var(--accent)}
 .reaction-count{font-weight:600;color:var(--text2)}
 
 /* REACTION PICKER */
 .reaction-picker{
   position:absolute;background:var(--surface2);border:1px solid var(--border);
-  border-radius:14px;padding:10px;display:none;grid-template-columns:repeat(6,1fr);
-  gap:6px;box-shadow:0 15px 40px rgba(0,0,0,0.5);z-index:101;
-  backdrop-filter:blur(12px);
+  border-radius:12px;padding:8px;display:none;grid-template-columns:repeat(6,1fr);
+  gap:4px;box-shadow:0 10px 30px rgba(0,0,0,0.4);z-index:101;
 }
 .reaction-picker.open{display:grid}
 .reaction-emoji{
-  width:36px;height:36px;border-radius:8px;cursor:pointer;display:flex;
-  align-items:center;justify-content:center;font-size:20px;transition:all .15s;
-  background:var(--surface3);
+  width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;font-size:18px;transition:background .15s;
 }
-.reaction-emoji:hover{
-  background:var(--accent);
-  transform:scale(1.15);
-}
+.reaction-emoji:hover{background:var(--surface3)}
 
 /* REPLY PREVIEW */
 .reply-preview{
@@ -1075,8 +1047,6 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
 import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
   onSnapshot, query, where, orderBy, updateDoc, serverTimestamp, arrayUnion, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-yTlSlnozIhdpp-0vfAoZK92PHUMf_jU",
@@ -1090,7 +1060,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 let recordTimeout = null;
 
@@ -2405,8 +2374,6 @@ window.uploadFile = async (input, type) => {
   const file = input.files[0];
   try {
     let dataUrl;
-    let useStorage = true; // Use Firebase Storage by default
-    
     if(type==='image') {
       let quality = 0.75, maxDim = 1280, attempts = 0;
       dataUrl = await compressImage(file, maxDim, quality);
@@ -2416,30 +2383,18 @@ window.uploadFile = async (input, type) => {
         dataUrl = await compressImage(file, maxDim, quality);
         attempts++;
       }
-      // For small images, still use base64 for simplicity
-      if(dataUrl.length < 200000) useStorage = false;
-      else if(dataUrl.length > MAX_DOC_LEN) {
+      if(dataUrl.length > MAX_DOC_LEN) {
         showToast('Фото слишком большое — выбери изображение поменьше', 'err', 'Файл слишком большой');
         input.value = ''; return;
       }
     } else {
-      // For videos and files, always use Storage
-      useStorage = true;
+      dataUrl = await blobToBase64(file);
+      if(dataUrl.length > MAX_DOC_LEN) {
+        showToast(`Файл слишком большой — максимум ~${Math.round(MAX_DOC_LEN*0.7/1024)} КБ. Выбери файл поменьше`, 'err', 'Файл не отправлен');
+        input.value = ''; return;
+      }
     }
-    
-    let url;
-    if(useStorage) {
-      // Upload to Firebase Storage
-      const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `chats/${currentChatId}/${fileName}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      url = await getDownloadURL(snapshot.ref);
-    } else {
-      // Use base64 for small images
-      url = dataUrl;
-    }
-    
-    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url:url};
+    const msgData = {sender:currentUser.uid, time:serverTimestamp(), url:dataUrl};
     if(type==='image') msgData.type = 'image';
     else if(type==='video') msgData.type = 'video';
     else { msgData.type = 'file'; msgData.fileName = file.name; }
@@ -2519,14 +2474,13 @@ window.toggleRecord = async () => {
         stream.getTracks().forEach(t=>t.stop());
         if(!currentChatId) return;
         try {
-          // Upload to Firebase Storage
-          const fileName = `${Date.now()}_voice.webm`;
-          const storageRef = ref(storage, `chats/${currentChatId}/${fileName}`);
-          const snapshot = await uploadBytes(storageRef, blob);
-          const url = await getDownloadURL(snapshot.ref);
-          
+          const dataUrl = await blobToBase64(blob);
+          if(dataUrl.length > MAX_DOC_LEN) {
+            showToast('Голосовое слишком длинное — запиши покороче (лимит ~' + Math.round(MAX_DOC_LEN*0.7/1024) + ' КБ)', 'err', 'Не отправлено');
+            return;
+          }
           await addDoc(collection(db,'chats',currentChatId,'messages'), {
-            type:'voice', url:url, sender:currentUser.uid, time:serverTimestamp()
+            type:'voice', url:dataUrl, sender:currentUser.uid, time:serverTimestamp()
           });
           await updateDoc(doc(db,'chats',currentChatId), {lastMsg:'Голосовое сообщение', lastTime:serverTimestamp(), lastSender:currentUser.uid});
         } catch(e) {
@@ -3073,6 +3027,7 @@ window.startCall = async (type) => {
   peerConnection.ontrack = e => {
     if(type==='video') document.getElementById('remoteVideo').srcObject = e.streams[0];
     else { stopRingtone(); document.getElementById('callStatus').textContent = 'Соединено'; }
+  };
   };
 
   const offer = await peerConnection.createOffer();
