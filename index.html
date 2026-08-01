@@ -63,6 +63,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 }
 .btn-primary:hover{opacity:.9}
 .btn-primary:active{transform:scale(.98)}
+.btn-secondary{
+  width:100%;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text2);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
+  transition:opacity .2s,transform .1s;
+}
+.btn-secondary:hover{opacity:.8;background:var(--surface3)}
+.btn-secondary:active{transform:scale(.98)}
 .auth-err{font-size:13px;margin-top:12px;text-align:center;min-height:20px;font-weight:500;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;line-height:1.4}
 .auth-err:empty{display:none}
 .auth-err.is-error::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0}
@@ -700,6 +707,57 @@ input[type=file]{display:none}
 .code-editor-wrap{background:linear-gradient(135deg,var(--surface2)0%,var(--surface3)100%);border:1px solid rgba(124,106,247,0.2)}
 .code-editor-bar{background:linear-gradient(90deg,var(--surface3)0%,var(--surface2)100%)}
 
+/* ───── TERMS AGREEMENT ───── */
+.terms-checkbox{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:16px;
+  padding:8px 12px;
+  background:rgba(124,106,247,0.05);
+  border-radius:10px;
+  border:1px solid rgba(124,106,247,0.1);
+}
+.terms-checkbox input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  flex-shrink:0;
+  margin-top:2px;
+  accent-color:var(--accent);
+  cursor:pointer;
+}
+.terms-checkbox label{
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.5;
+  cursor:pointer;
+}
+.terms-checkbox label a{
+  color:var(--accent2);
+  text-decoration:underline;
+  cursor:pointer;
+}
+.terms-checkbox label a:hover{color:var(--accent)}
+
+/* TERMS MODAL */
+.terms-modal .modal{
+  max-height:70vh;
+}
+.terms-content{
+  font-size:13px;
+  color:var(--text2);
+  line-height:1.7;
+  padding:4px 0;
+}
+.terms-content h3{
+  color:var(--text);
+  font-size:15px;
+  margin:16px 0 8px;
+}
+.terms-content p{margin-bottom:10px}
+.terms-content ul{padding-left:20px;margin-bottom:12px}
+.terms-content li{margin-bottom:4px}
+
 /* ───── MOBILE RESPONSIVE ───── */
 @media(max-width:768px){
   :root{--sidebar-width:85vw}
@@ -797,6 +855,47 @@ input[type=file]{display:none}
   </div>
 </div>
 
+<!-- TERMS MODAL -->
+<div class="modal-bg" id="termsModal">
+  <div class="modal terms-modal">
+    <button class="modal-close" onclick="closeModal('termsModal')">✕</button>
+    <h2>Пользовательское соглашение</h2>
+    <div class="terms-content">
+      <p>Добро пожаловать в Ysend! Используя наш мессенджер, вы соглашаетесь со следующими условиями:</p>
+      
+      <h3>1. Общие положения</h3>
+      <p>1.1. Ysend — это мессенджер, предоставляющий возможность обмена текстовыми сообщениями, медиафайлами, аудио- и видеозвонками.</p>
+      <p>1.2. Использование сервиса означает полное и безоговорочное принятие настоящего соглашения.</p>
+      
+      <h3>2. Безопасность и конфиденциальность</h3>
+      <p>2.1. Ysend стремится обеспечить высокий уровень безопасности ваших данных и переписки.</p>
+      <p>2.2. <strong>ВАЖНО:</strong> Ysend НЕ ГАРАНТИРУЕТ абсолютную безопасность передаваемых данных. Мы прилагаем все усилия для защиты информации, но не можем гарантировать полную защиту от несанкционированного доступа, взлома или утечки данных.</p>
+      <p>2.3. Вы несёте ответственность за сохранность своего пароля и данных учётной записи.</p>
+      <p>2.4. Мы не несём ответственности за ущерб, вызванный несанкционированным доступом к вашему аккаунту.</p>
+      
+      <h3>3. Пользовательские данные</h3>
+      <p>3.1. Мы собираем и храним минимально необходимую информацию для работы сервиса: имя, email, аватар, настройки.</p>
+      <p>3.2. Ваши сообщения хранятся в зашифрованном виде в облачной базе данных.</p>
+      <p>3.3. Мы не передаём ваши данные третьим лицам без вашего согласия.</p>
+      
+      <h3>4. Ответственность пользователя</h3>
+      <p>4.1. Вы несёте ответственность за все действия, совершённые с вашей учётной записью.</p>
+      <p>4.2. Запрещается использовать Ysend для распространения незаконного контента, спама, угроз и оскорблений.</p>
+      <p>4.3. Мы оставляем за собой право блокировать аккаунты, нарушающие правила.</p>
+      
+      <h3>5. Изменения в соглашении</h3>
+      <p>5.1. Мы можем изменять условия соглашения. Обо всех изменениях мы уведомим вас через сайт или email.</p>
+      <p>5.2. Продолжая использовать Ysend после изменений, вы соглашаетесь с новой версией соглашения.</p>
+      
+      <h3>6. Контакты</h3>
+      <p>По вопросам работы сервиса вы можете связаться с нами через раздел поддержки.</p>
+      
+      <p style="margin-top:16px;color:var(--text3);font-size:12px;text-align:center">Последнее обновление: 1 августа 2025 г.</p>
+    </div>
+    <button class="btn-primary" style="margin-top:16px" onclick="closeModal('termsModal')">Закрыть</button>
+  </div>
+</div>
+
 <!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="auth-card">
@@ -819,6 +918,15 @@ input[type=file]{display:none}
       <div class="field"><label>Имя</label><input type="text" id="regName" placeholder="Твоё имя"/></div>
       <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com"/></div>
       <div class="field"><label>Пароль</label><input type="password" id="regPass" placeholder="Минимум 6 символов"/></div>
+      
+      <!-- TERMS CHECKBOX -->
+      <div class="terms-checkbox">
+        <input type="checkbox" id="termsCheckbox"/>
+        <label for="termsCheckbox">
+          Я принимаю <a onclick="event.preventDefault();openTermsModal()">пользовательское соглашение</a>
+        </label>
+      </div>
+      
       <button class="btn-primary" onclick="doRegister()">Создать аккаунт</button>
     </div>
     <div id="verifyForm" style="display:none">
@@ -826,7 +934,7 @@ input[type=file]{display:none}
       <div class="auth-sub" style="margin-bottom:18px">Мы отправили код подтверждения на <b id="verifyEmailLabel"></b>. Введи его, чтобы продолжить.</div>
       <div class="field"><label>Код из письма</label><input type="text" id="verifyCodeInput" maxlength="6" placeholder="000000"/></div>
       <button class="btn-primary" onclick="confirmRegisterCode()">Подтвердить</button>
-      <button class="btn-primary" style="background:var(--surface2);color:var(--text2);margin-top:8px" onclick="resendRegisterCode()">Отправить код ещё раз</button>
+      <button class="btn-secondary" style="margin-top:8px" onclick="resendRegisterCode()">Отправить код ещё раз</button>
     </div>
     <div id="forgotForm" style="display:none">
       <button class="modal-close" onclick="backToLoginFromForgot()" title="Назад" style="float:none;margin:-4px 0 8px -4px">← Назад</button>
@@ -836,12 +944,10 @@ input[type=file]{display:none}
     </div>
     <div id="forgotResetForm" style="display:none">
       <button class="modal-close" onclick="backToLoginFromForgot()" title="Назад" style="float:none;margin:-4px 0 8px -4px">← Назад</button>
-      <div class="auth-sub" style="margin-bottom:18px">Мы отправили код на <b id="forgotEmailLabel"></b>. Введи его и новый пароль.</div>
+      <div class="auth-sub" style="margin-bottom:18px">Мы отправили код на <b id="forgotEmailLabel"></b>. Введи его.</div>
       <div class="field"><label>Код из письма</label><input type="text" id="forgotCodeInput" maxlength="6" placeholder="000000"/></div>
-      <div class="field"><label>Новый пароль</label><input type="password" id="forgotNewPass" placeholder="Минимум 6 символов"/></div>
-      <div class="field"><label>Повтори новый пароль</label><input type="password" id="forgotNewPass2" placeholder="Повтори пароль"/></div>
-      <button class="btn-primary" onclick="confirmForgotPassword()">Сменить пароль</button>
-      <button class="btn-primary" style="background:var(--surface2);color:var(--text2);margin-top:8px" onclick="sendForgotPasswordEmail()">Отправить код ещё раз</button>
+      <button class="btn-primary" onclick="confirmForgotPassword()">Проверить код</button>
+      <button class="btn-secondary" style="margin-top:8px" onclick="sendForgotPasswordEmail()">Отправить код ещё раз</button>
     </div>
     <div class="auth-err" id="authErr"></div>
   </div>
@@ -1285,6 +1391,11 @@ window.backToLoginFromRegister = function() {
   setAuthErr('');
 };
 
+// ───── TERMS ─────
+window.openTermsModal = function() {
+  openModal('termsModal');
+};
+
 // ───── MOBILE SIDEBAR TOGGLE ─────
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -1340,13 +1451,9 @@ window.confirmChangePassword = async function() {
   if(newPass !== newPassConfirm) { showToast('Новые пароли не совпадают', 'err'); return; }
   
   try {
-    // Re-authenticate first
     const credential = EmailAuthProvider.credential(currentUser.email, currentPass);
     await reauthenticateWithCredential(currentUser, credential);
-    
-    // Then change password
     await updatePassword(currentUser, newPass);
-    
     closeModal('changePasswordModal');
     showToast('Пароль успешно изменён!', 'ok');
   } catch(e) {
@@ -1433,6 +1540,7 @@ let editBotAvatarData = '';
 let groupSettingsChatId = null;
 let searchDebounce = null;
 let chatListRenderGen = 0;
+let pendingForgotCode = null;
 
 const EMAILJS_SERVICE_ID = 'service_6zk038s';
 const EMAILJS_TEMPLATE_ID = 'template_vzliejd';
@@ -1494,84 +1602,57 @@ window.backToLoginFromForgot = () => {
   switchTab('login');
 };
 
-let forgotPasswordEmail = '';
-
 window.sendForgotPasswordEmail = async () => {
-  const emailInput = document.getElementById('forgotEmail').value.trim();
-  const email = emailInput || forgotPasswordEmail;
+  const email = document.getElementById('forgotEmail').value.trim();
   if(!email) { setAuthErr('Укажи email, привязанный к аккаунту'); return; }
-  forgotPasswordEmail = email;
-  setAuthErr('Отправляем письмо...', 'info');
+  setAuthErr('Отправляем код...', 'info');
+  
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  pendingForgotCode = {code, expires: Date.now() + 10*60*1000, email: email};
+  
   try {
-    // Use EmailJS to send code instead of Firebase
-    const code = String(Math.floor(100000 + Math.random()*900000));
-    pendingForgotCode = {code, expires: Date.now() + 10*60*1000, email: email};
     await sendVerificationEmail(email, code);
     document.getElementById('forgotForm').style.display = 'none';
     document.getElementById('forgotResetForm').style.display = 'block';
     document.getElementById('forgotEmailLabel').textContent = email;
     document.getElementById('forgotCodeInput').value = '';
-    document.getElementById('forgotNewPass').value = '';
-    document.getElementById('forgotNewPass2').value = '';
-    setAuthErr('Письмо с кодом отправлено на ' + email + '. Проверь почту (и папку «Спам»).', 'success');
+    setAuthErr('Код отправлен на ' + email + '. Проверь почту (и папку «Спам»).', 'success');
   } catch(e) {
     setAuthErr('Не удалось отправить код: ' + (e.message||'попробуй позже'));
+    pendingForgotCode = null;
   }
 };
 
-let pendingForgotCode = null;
-
 window.confirmForgotPassword = async () => {
-  const codeRaw = document.getElementById('forgotCodeInput').value.trim();
-  const pass1 = document.getElementById('forgotNewPass').value;
-  const pass2 = document.getElementById('forgotNewPass2').value;
-  if(!codeRaw) { setAuthErr('Введи код из письма'); return; }
-  if(pass1.length < 6) { setAuthErr('Пароль слишком короткий — минимум 6 символов'); return; }
-  if(pass1 !== pass2) { setAuthErr('Пароли не совпадают'); return; }
+  const codeInput = document.getElementById('forgotCodeInput').value.trim();
+  if(!codeInput) { setAuthErr('Введи код из письма'); return; }
   
   if(!pendingForgotCode) { setAuthErr('Сначала запроси код по кнопке «Отправить код»'); return; }
   if(Date.now() > pendingForgotCode.expires) { setAuthErr('Код устарел — запроси новый'); return; }
-  if(codeRaw !== pendingForgotCode.code) { setAuthErr('Неверный код — проверь письмо'); return; }
+  if(codeInput !== pendingForgotCode.code) { setAuthErr('Неверный код — проверь письмо'); return; }
   
   try {
-    // Use Firebase to reset password with the verified code
-    // Since we can't generate oobCode ourselves, we need to use Firebase's sendPasswordResetEmail
-    // But we already verified the code via EmailJS, so we can directly update the password
-    // using the user's email (they are not logged in during forgot password)
-    // We'll use signInWithEmailAndPassword to verify the user exists, then update password
-    // Actually, we need to use Firebase's built-in reset flow for security
-    // Let's use the standard Firebase reset with the code as oobCode
-    try {
-      // Try to use Firebase's built-in reset with the code
-      await verifyPasswordResetCode(auth, codeRaw);
-      await confirmPasswordReset(auth, codeRaw, pass1);
-      setAuthErr('Пароль изменён! Теперь можно войти с новым паролем.', 'success');
-      pendingForgotCode = null;
-      setTimeout(backToLoginFromForgot, 1800);
-    } catch(e) {
-      // If Firebase doesn't recognize the code, use the EmailJS-verified approach
-      // Find user by email and update password (requires reauthentication)
-      // We'll use the email to sign in and change password
-      try {
-        const userCred = await signInWithEmailAndPassword(auth, pendingForgotCode.email, codeRaw);
-        await updatePassword(userCred.user, pass1);
-        setAuthErr('Пароль изменён! Теперь можно войти с новым паролем.', 'success');
-        pendingForgotCode = null;
-        setTimeout(backToLoginFromForgot, 1800);
-      } catch(e2) {
-        setAuthErr('Не удалось сменить пароль. Попробуй использовать ссылку из письма или запроси код заново.');
-      }
-    }
+    // Отправляем ссылку для сброса пароля через Firebase
+    await sendPasswordResetEmail(auth, pendingForgotCode.email);
+    setAuthErr('Ссылка для сброса пароля отправлена на ' + pendingForgotCode.email + '. Перейди по ссылке в письме и установи новый пароль.', 'success');
+    pendingForgotCode = null;
+    setTimeout(backToLoginFromForgot, 4000);
   } catch(e) {
-    setAuthErr('Не удалось сменить пароль: ' + (e.message||'попробуй ещё раз'));
+    console.error('Error sending password reset:', e);
+    setAuthErr('Не удалось отправить ссылку для сброса пароля. Попробуй ещё раз.', 'error');
   }
 };
 
+// ───── REGISTER ─────
 window.doRegister = async () => {
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const pass = document.getElementById('regPass').value;
+  const termsChecked = document.getElementById('termsCheckbox').checked;
+  
   if(!name){setAuthErr('Введи своё имя — оно будет отображаться в чатах');return}
+  if(!termsChecked){setAuthErr('Прими пользовательское соглашение, чтобы продолжить');return}
+  
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(cred.user, {displayName: name});
